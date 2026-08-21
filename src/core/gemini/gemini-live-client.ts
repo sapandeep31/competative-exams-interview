@@ -109,8 +109,9 @@ export class GeminiLiveClient {
   private sendSetup(): void {
     const systemInstruction = buildSystemInstruction(
       this.config.candidateName,
-      this.config.role,
-      this.config.level,
+      this.config.examCategory ?? this.config.role,
+      this.config.simulationMode ?? this.config.level,
+      this.config.background,
     );
 
     const setupMessage = {

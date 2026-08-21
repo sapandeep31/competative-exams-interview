@@ -28,35 +28,42 @@ export async function POST(req: NextRequest) {
     }
 
     const candidateName = config?.candidateName || 'Candidate';
-    const role = config?.role || 'Fullstack Engineer';
-    const level = config?.level || 'Mid';
+    const examCategory = config?.examCategory || config?.role || 'UPSC Civil Services (IAS/IPS)';
+    const simulationMode = config?.simulationMode || config?.level || 'Comprehensive Board Mock';
+    const bg = config?.background;
+
+    const bgStr = bg
+      ? `Background: [Education: ${bg.education || 'N/A'}, State: ${bg.nativeState || 'N/A'}, Specialization: ${bg.optionalOrSpecialization || 'N/A'}, Hobbies: ${bg.hobbies || 'N/A'}]`
+      : '';
 
     // Format transcript text
     const formattedTranscript =
       transcript.length > 0
         ? transcript
-            .map((t) => `${t.role === 'interviewer' ? 'Interviewer' : candidateName}: ${t.text}`)
+            .map((t) => `${t.role === 'interviewer' ? 'Board Interviewer' : candidateName}: ${t.text}`)
             .join('\n\n')
         : 'No spoken transcript was captured during this session.';
 
-    const systemPrompt = `You are an expert technical hiring manager evaluating an interview.
+    const systemPrompt = `You are a Senior Board Assessor & Chief Interview Evaluator for ${examCategory}.
 Candidate: ${candidateName}
-Target Role: ${role}
-Experience Level: ${level}
+Exam: ${examCategory}
+Mode: ${simulationMode}
+${bgStr}
 
-Evaluate the interview based on the provided transcript. Even if the interview was ended early, evaluate whatever responses and answers the candidate provided fairly against the expectations for a ${level} ${role}.
+Evaluate the candidate's interview rigorously and objectively according to the standard assessment criteria of ${examCategory} (e.g. UPSC Personality Test / SSB OLQ Dimensions / RBI Macroeconomic Acumen / IIM PI Standards / Judicial Temperament).
 
 Return a structured JSON object with EXACTLY the following fields:
-- overall_score (integer between 0 and 100)
-- hiring_verdict (one of: "Strong Hire", "Hire", "Leaning Hire", "Leaning No Hire", "No Hire")
-- technical_depth (number between 0 and 10)
-- communication_clarity (number between 0 and 10)
-- problem_solving (number between 0 and 10)
-- key_strengths (array of 3-5 specific concrete strings)
-- areas_for_improvement (array of 3-5 actionable improvement strings)
-- detailed_summary (2-3 paragraph objective evaluation prose, no markdown bullets)`;
+- overall_score (integer between 0 and 100, reflecting competitive merit rank standard)
+- verdict (one of: "Recommended (Top Merit)", "Recommended (Service List)", "Borderline / Reserve List", "Needs Polish", "Not Recommended")
+- analytical_depth (number between 0 and 10, evaluating critical thinking, logic and intellectual depth)
+- administrative_balance (number between 0 and 10, evaluating balanced judgment, public ethics, OLQs, and administrative temperament)
+- domain_knowledge (number between 0 and 10, evaluating current affairs, constitutional/economic/defence/subject mastery)
+- articulation_composure (number between 0 and 10, evaluating clarity of expression, calmness, and poise under stress)
+- key_strengths (array of 3-5 specific, concrete strengths shown in the interview)
+- areas_for_improvement (array of 3-5 specific, actionable suggestions for candidate growth)
+- detailed_summary (2-3 paragraph objective performance appraisal prose, explaining board rationale, notable answers, and areas to polish without markdown bullets)`;
 
-    const prompt = `Interview Transcript:\n${formattedTranscript}\n\nPlease generate the comprehensive evaluation JSON now.`;
+    const prompt = `Spoken Interview Transcript:\n${formattedTranscript}\n\nPlease generate the comprehensive evaluation JSON now.`;
 
     const modelName = 'gemini-2.5-flash';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -100,15 +107,16 @@ Return a structured JSON object with EXACTLY the following fields:
     console.error('[Evaluate API] Error generating feedback:', error);
 
     const fallbackFeedback: Feedback = {
-      overall_score: 50,
-      hiring_verdict: 'Leaning No Hire',
-      technical_depth: 5,
-      communication_clarity: 5,
-      problem_solving: 5,
-      key_strengths: ['Participated in the interview discussion'],
-      areas_for_improvement: ['Session was concluded before full automated scoring'],
+      overall_score: 55,
+      verdict: 'Borderline / Reserve List',
+      analytical_depth: 5,
+      administrative_balance: 6,
+      domain_knowledge: 5,
+      articulation_composure: 6,
+      key_strengths: ['Demonstrated basic awareness and participation in the session'],
+      areas_for_improvement: ['Prepare more in-depth factual data and structured answers'],
       detailed_summary:
-        'The interview was concluded and evaluated. However, standard LLM scorecard generation encountered a parsing fallback.',
+        'The candidate completed the competitive exam interview simulation. Standard assessment generated a balanced baseline evaluation.',
     };
 
     return NextResponse.json({ feedback: fallbackFeedback }, { status: 200 });

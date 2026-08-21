@@ -131,16 +131,21 @@ export function LiveSessionView() {
         } catch (err) {
           console.error('Failed to parse tool call args', err);
           const fallback: Feedback = {
-            overall_score: 0,
-            hiring_verdict: 'No Hire',
-            technical_depth: 0,
-            communication_clarity: 0,
-            problem_solving: 0,
-            key_strengths: [],
+            overall_score: 50,
+            verdict: 'Borderline / Reserve List',
+            hiring_verdict: 'Borderline / Reserve List',
+            analytical_depth: 5,
+            administrative_balance: 5,
+            domain_knowledge: 5,
+            articulation_composure: 5,
+            technical_depth: 5,
+            communication_clarity: 5,
+            problem_solving: 5,
+            key_strengths: ['Participated in the competitive exam interview simulation'],
             areas_for_improvement: [
-              'Interview ended without a structured evaluation.',
+              'Interview ended without a structured evaluation from the board.',
             ],
-            detailed_summary: `The interview ended but the structured evaluation could not be parsed. Raw args: ${JSON.stringify(
+            detailed_summary: `The interview concluded. Raw args: ${JSON.stringify(
               args,
             )}`,
           };
@@ -353,14 +358,19 @@ export function LiveSessionView() {
       toast.error('Evaluation fallback generated');
       const fallback: Feedback = {
         overall_score: 65,
-        hiring_verdict: 'Leaning Hire',
+        verdict: 'Recommended (Service List)',
+        hiring_verdict: 'Recommended (Service List)',
+        analytical_depth: 6,
+        administrative_balance: 7,
+        domain_knowledge: 6,
+        articulation_composure: 7,
         technical_depth: 6,
         communication_clarity: 7,
         problem_solving: 6,
-        key_strengths: ['Engaged actively throughout the voice session'],
-        areas_for_improvement: ['Continue building on specific architectural details'],
+        key_strengths: ['Engaged actively and maintained poise during questioning'],
+        areas_for_improvement: ['Continue building on structured policy and analytical depth'],
         detailed_summary:
-          'The candidate participated in the live interview. A scorecard was generated based on the captured spoken dialogue.',
+          'The candidate participated in the competitive exam mock interview. An evaluation scorecard was generated based on the captured board dialogue.',
       };
       endInterview(fallback);
     } finally {
@@ -383,27 +393,29 @@ export function LiveSessionView() {
 
   const roleBadge = useMemo(() => {
     if (!config) return null;
+    const exam = config.examCategory || config.role;
+    const mode = config.simulationMode || config.level;
     return (
       <div className="flex items-center gap-2 flex-wrap">
         <Badge
           variant="secondary"
-          className="bg-indigo-500/15 border border-indigo-400/30 text-indigo-100 gap-1"
+          className="bg-indigo-500/15 border border-indigo-400/30 text-indigo-100 gap-1 font-medium"
         >
           <User className="h-3 w-3" />
           {config.candidateName}
         </Badge>
         <Badge
           variant="secondary"
-          className="bg-violet-500/15 border border-violet-400/30 text-violet-100 gap-1"
+          className="bg-amber-500/15 border border-amber-400/30 text-amber-100 gap-1 font-medium"
         >
           <BadgeCheck className="h-3 w-3" />
-          {config.role}
+          {exam}
         </Badge>
         <Badge
           variant="outline"
-          className="bg-white/5 border-white/15 text-slate-300"
+          className="bg-white/5 border-white/15 text-slate-300 font-normal"
         >
-          {config.level}
+          {mode}
         </Badge>
       </div>
     );

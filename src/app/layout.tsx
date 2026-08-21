@@ -14,20 +14,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Voice Interviewer — Gemini Live",
+  title: "Competitive Exams AI Interview Simulator — UPSC, SSB, RBI & IIMs",
   description:
-    "Real-time AI-powered voice interviews with a feedback scorecard, built on the Google Gemini Live API.",
+    "Simulate authentic board interviews for UPSC Civil Services, SSB Defence, RBI Grade B, IIMs MBA PI, and State PSC with real-time Gemini voice AI and OLQ/administrative radar scorecards.",
   keywords: [
-    "AI interviewer",
-    "Gemini Live",
-    "voice interview",
-    "real-time audio",
-    "Next.js",
+    "UPSC Interview Prep",
+    "SSB Interview Practice",
+    "RBI Grade B Interview",
+    "IIM Personal Interview",
+    "State PSC Interview",
+    "AI Mock Interview",
+    "Gemini Live AI",
   ],
-  authors: [{ name: "AI Voice Interviewer" }],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  authors: [{ name: "Competitive Exams AI Board" }],
 };
 
 export default function RootLayout({

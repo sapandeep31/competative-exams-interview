@@ -21,12 +21,13 @@ import {
   CheckCircle2,
   AlertTriangle,
   Trophy,
-  Download,
   Copy,
   RotateCcw,
-  FileText,
   User,
   BadgeCheck,
+  Landmark,
+  Printer,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,21 +38,37 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useInterviewStore } from '@/core/state/useInterviewStore';
-import type { Feedback, HiringVerdict } from '@/core/state/types';
+import type { ExamVerdict, Feedback } from '@/core/state/types';
 import { cn } from '@/lib/utils';
 
-const VERDICT_STYLES: Record<HiringVerdict, string> = {
-  'Strong Hire': 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200',
-  Hire: 'bg-emerald-500/15 border-emerald-400/40 text-emerald-200',
-  'Leaning Hire': 'bg-lime-500/15 border-lime-400/40 text-lime-200',
-  'Leaning No Hire': 'bg-amber-500/15 border-amber-400/40 text-amber-200',
-  'No Hire': 'bg-red-500/15 border-red-400/40 text-red-200',
+const VERDICT_STYLES: Record<ExamVerdict, { badge: string; desc: string }> = {
+  'Recommended (Top Merit)': {
+    badge: 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200',
+    desc: 'Outstanding performance — candidate demonstrated top-tier analytical depth, balanced judgment, and officer-like composure.',
+  },
+  'Recommended (Service List)': {
+    badge: 'bg-teal-500/20 border-teal-400/50 text-teal-200',
+    desc: 'Commendable performance — solid grasp of core issues and well-calibrated responses suitable for appointment.',
+  },
+  'Borderline / Reserve List': {
+    badge: 'bg-amber-500/20 border-amber-400/50 text-amber-200',
+    desc: 'Promising potential with occasional hesitation or superficial answers — placed in the reserve/borderline bracket.',
+  },
+  'Needs Polish': {
+    badge: 'bg-orange-500/20 border-orange-400/50 text-orange-200',
+    desc: 'Needs further refinement in structured articulation, factual backing, and maintaining administrative neutrality.',
+  },
+  'Not Recommended': {
+    badge: 'bg-red-500/20 border-red-400/50 text-red-200',
+    desc: 'Below board cutoff — significant gaps in domain depth, policy awareness, or composure under questioning.',
+  },
 };
 
 function scoreColor(score: number, max: number): string {
   const pct = (score / max) * 100;
-  if (pct >= 70) return '#10b981'; // emerald
-  if (pct >= 50) return '#f59e0b'; // amber
+  if (pct >= 75) return '#10b981'; // emerald
+  if (pct >= 55) return '#38bdf8'; // sky
+  if (pct >= 40) return '#f59e0b'; // amber
   return '#ef4444'; // red
 }
 
@@ -69,15 +86,7 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-// --- Sub-components ---
-
-function CircularGauge({
-  score,
-  max = 100,
-}: {
-  score: number;
-  max?: number;
-}) {
+function CircularGauge({ score, max = 100 }: { score: number; max?: number }) {
   const radius = 70;
   const stroke = 12;
   const circumference = 2 * Math.PI * radius;
@@ -87,19 +96,8 @@ function CircularGauge({
 
   return (
     <div className="relative w-44 h-44 flex-shrink-0">
-      <svg
-        viewBox="0 0 180 180"
-        className="w-full h-full -rotate-90"
-        aria-hidden="true"
-      >
-        <circle
-          cx="90"
-          cy="90"
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth={stroke}
-        />
+      <svg viewBox="0 0 180 180" className="w-full h-full -rotate-90" aria-hidden="true">
+        <circle cx="90" cy="90" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
         <motion.circle
           cx="90"
           cy="90"
@@ -115,15 +113,12 @@ function CircularGauge({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className="text-4xl font-bold tracking-tight"
-          style={{ color }}
-        >
+        <span className="text-4xl font-extrabold tracking-tight" style={{ color }}>
           {Math.round(score)}
         </span>
         <span className="text-xs text-slate-500 mt-0.5">/ {max}</span>
-        <span className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">
-          Overall Score
+        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
+          Board Marks
         </span>
       </div>
     </div>
@@ -167,40 +162,41 @@ function ScoreBar({
 
 function buildMarkdown(
   feedback: Feedback,
-  meta: { name: string; role: string; level: string; date: string; duration: string },
+  meta: { name: string; exam: string; mode: string; date: string; duration: string },
   transcript: { role: 'user' | 'interviewer'; text: string; timestamp: number }[],
 ): string {
   const lines: string[] = [];
-  lines.push(`# Interview Feedback Report`);
+  lines.push(`# Competitive Exams Interview Evaluation Report`);
   lines.push('');
   lines.push(`- **Candidate:** ${meta.name}`);
-  lines.push(`- **Role:** ${meta.role}`);
-  lines.push(`- **Level:** ${meta.level}`);
+  lines.push(`- **Exam Board:** ${meta.exam}`);
+  lines.push(`- **Simulation Mode:** ${meta.mode}`);
   lines.push(`- **Date:** ${meta.date}`);
   lines.push(`- **Duration:** ${meta.duration}`);
   lines.push('');
-  lines.push(`## Overall Score: ${feedback.overall_score} / 100`);
-  lines.push(`## Hiring Verdict: ${feedback.hiring_verdict}`);
+  lines.push(`## Board Marks: ${feedback.overall_score} / 100`);
+  lines.push(`## Final Recommendation: ${feedback.verdict || feedback.hiring_verdict}`);
   lines.push('');
-  lines.push(`## Sub-scores`);
-  lines.push(`- Technical Depth: ${feedback.technical_depth} / 10`);
-  lines.push(`- Communication Clarity: ${feedback.communication_clarity} / 10`);
-  lines.push(`- Problem Solving: ${feedback.problem_solving} / 10`);
+  lines.push(`## Assessment Dimensions`);
+  lines.push(`- Analytical & Critical Depth: ${(feedback.analytical_depth ?? feedback.problem_solving ?? 0).toFixed(1)} / 10`);
+  lines.push(`- Administrative Judgment & OLQs: ${(feedback.administrative_balance ?? 0).toFixed(1)} / 10`);
+  lines.push(`- Domain & Current Affairs Mastery: ${(feedback.domain_knowledge ?? feedback.technical_depth ?? 0).toFixed(1)} / 10`);
+  lines.push(`- Articulation & Composure: ${(feedback.articulation_composure ?? feedback.communication_clarity ?? 0).toFixed(1)} / 10`);
   lines.push('');
-  lines.push(`## Key Strengths`);
-  for (const s of feedback.key_strengths) lines.push(`- ${s}`);
+  lines.push(`## Key Demonstrated Strengths`);
+  for (const s of feedback.key_strengths || []) lines.push(`- ${s}`);
   lines.push('');
-  lines.push(`## Areas for Improvement`);
-  for (const s of feedback.areas_for_improvement) lines.push(`- ${s}`);
+  lines.push(`## Actionable Areas for Improvement`);
+  for (const s of feedback.areas_for_improvement || []) lines.push(`- ${s}`);
   lines.push('');
-  lines.push(`## Detailed Summary`);
+  lines.push(`## Board Narrative Appraisal`);
   lines.push('');
   lines.push(feedback.detailed_summary);
   lines.push('');
-  lines.push(`## Full Transcript`);
+  lines.push(`## Spoken Interview Transcript`);
   lines.push('');
   for (const t of transcript) {
-    const who = t.role === 'user' ? 'Candidate' : 'Interviewer';
+    const who = t.role === 'user' ? 'Candidate' : 'Board Panelist';
     const time = new Date(t.timestamp).toLocaleTimeString();
     lines.push(`**[${time}] ${who}:** ${t.text}`);
     lines.push('');
@@ -220,8 +216,8 @@ export function FeedbackReport() {
   const meta = useMemo(
     () => ({
       name: config?.candidateName ?? 'Candidate',
-      role: config?.role ?? 'Role',
-      level: config?.level ?? 'Level',
+      exam: config?.examCategory ?? config?.role ?? 'UPSC Civil Services',
+      mode: config?.simulationMode ?? config?.level ?? 'Comprehensive Board Mock',
       date: formatTime(Date.now()),
       duration: formatDuration(elapsedSeconds),
     }),
@@ -229,29 +225,38 @@ export function FeedbackReport() {
   );
 
   if (!feedback) {
-    // Defensive — shouldn't happen because the store only enters 'feedback' phase with one set.
     return (
       <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
         <div className="text-center">
-          <p className="text-slate-400">No feedback available.</p>
+          <p className="text-slate-400">No evaluation report available.</p>
           <Button onClick={reset} className="mt-4">
-            Start New Interview
+            Start New Mock Interview
           </Button>
         </div>
       </main>
     );
   }
 
+  const analytical = feedback.analytical_depth ?? feedback.problem_solving ?? 6;
+  const adminBalance = feedback.administrative_balance ?? 6;
+  const domain = feedback.domain_knowledge ?? feedback.technical_depth ?? 6;
+  const articulation = feedback.articulation_composure ?? feedback.communication_clarity ?? 6;
+
+  const currentVerdict = (feedback.verdict || feedback.hiring_verdict || 'Recommended (Service List)') as ExamVerdict;
+  const verdictInfo = VERDICT_STYLES[currentVerdict] || VERDICT_STYLES['Recommended (Service List)'];
+
   const radarData = [
-    { axis: 'Technical', value: feedback.technical_depth, max: 10 },
-    { axis: 'Communication', value: feedback.communication_clarity, max: 10 },
-    { axis: 'Problem Solving', value: feedback.problem_solving, max: 10 },
+    { axis: 'Analytical Depth', value: analytical, max: 10 },
+    { axis: 'Admin Balance / OLQs', value: adminBalance, max: 10 },
+    { axis: 'Domain & Current Affairs', value: domain, max: 10 },
+    { axis: 'Articulation & Poise', value: articulation, max: 10 },
   ];
 
   const barData = [
-    { name: 'Technical', value: feedback.technical_depth, fill: scoreColor(feedback.technical_depth, 10) },
-    { name: 'Communication', value: feedback.communication_clarity, fill: scoreColor(feedback.communication_clarity, 10) },
-    { name: 'Problem Solving', value: feedback.problem_solving, fill: scoreColor(feedback.problem_solving, 10) },
+    { name: 'Analytical Depth', value: analytical, fill: scoreColor(analytical, 10) },
+    { name: 'Admin Balance / OLQs', value: adminBalance, fill: scoreColor(adminBalance, 10) },
+    { name: 'Domain & Current Affairs', value: domain, fill: scoreColor(domain, 10) },
+    { name: 'Articulation & Poise', value: articulation, fill: scoreColor(articulation, 10) },
   ];
 
   const handleCopyMarkdown = async () => {
@@ -259,7 +264,7 @@ export function FeedbackReport() {
     try {
       await navigator.clipboard.writeText(md);
       setCopied(true);
-      toast.success('Markdown copied to clipboard');
+      toast.success('Full evaluation report copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Failed to copy', {
@@ -269,12 +274,7 @@ export function FeedbackReport() {
   };
 
   const handlePrint = () => {
-    // Print-friendly CSS hides interactive chrome and reveals the printable report.
-    document.body.classList.add('printing');
-    setTimeout(() => {
-      window.print();
-      document.body.classList.remove('printing');
-    }, 50);
+    window.print();
   };
 
   return (
@@ -286,26 +286,26 @@ export function FeedbackReport() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="text-center mb-8 print-friendly-header"
+            className="text-center mb-8"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-medium mb-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-medium mb-3">
               <Trophy className="h-3.5 w-3.5" />
-              Interview Complete
+              Official Board Assessment Complete
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Feedback Scorecard
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-violet-200 bg-clip-text text-transparent">
+              {meta.exam} Scorecard
             </h1>
             <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
-              <Badge className="bg-indigo-500/15 border border-indigo-400/30 text-indigo-100 gap-1">
+              <Badge className="bg-indigo-500/15 border border-indigo-400/30 text-indigo-100 gap-1 font-medium">
                 <User className="h-3 w-3" />
                 {meta.name}
               </Badge>
-              <Badge className="bg-violet-500/15 border border-violet-400/30 text-violet-100 gap-1">
-                <BadgeCheck className="h-3 w-3" />
-                {meta.role}
+              <Badge className="bg-amber-500/15 border border-amber-400/30 text-amber-100 gap-1 font-medium">
+                <Landmark className="h-3 w-3" />
+                {meta.exam}
               </Badge>
               <Badge variant="outline" className="bg-white/5 border-white/15 text-slate-300">
-                {meta.level}
+                {meta.mode}
               </Badge>
               <Badge variant="outline" className="bg-white/5 border-white/15 text-slate-300">
                 {meta.date}
@@ -319,35 +319,26 @@ export function FeedbackReport() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.05 }}
-              className="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-8"
+              className="glass-panel rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-8 border border-white/10"
             >
               <CircularGauge score={feedback.overall_score} max={100} />
               <div className="flex-1 text-center sm:text-left">
-                <p className="text-xs uppercase tracking-wider text-slate-500 mb-2">
-                  Hiring Verdict
+                <p className="text-xs uppercase font-semibold tracking-wider text-slate-400 mb-2">
+                  Board Recommendation Verdict
                 </p>
                 <div
                   className={cn(
-                    'inline-block px-4 py-2 rounded-xl border text-lg font-semibold',
-                    VERDICT_STYLES[feedback.hiring_verdict],
+                    'inline-block px-4 py-2 rounded-xl border text-lg font-bold shadow-md',
+                    verdictInfo.badge,
                   )}
                 >
-                  {feedback.hiring_verdict}
+                  {currentVerdict}
                 </div>
-                <p className="mt-4 text-sm text-slate-400">
-                  {feedback.hiring_verdict === 'Strong Hire' &&
-                    'Outstanding performance — the candidate clearly exceeded expectations.'}
-                  {feedback.hiring_verdict === 'Hire' &&
-                    'Solid performance — the candidate is recommended for the role.'}
-                  {feedback.hiring_verdict === 'Leaning Hire' &&
-                    'Promising — leaning toward hiring with minor reservations.'}
-                  {feedback.hiring_verdict === 'Leaning No Hire' &&
-                    'Mixed signals — leaning against hiring at this time.'}
-                  {feedback.hiring_verdict === 'No Hire' &&
-                    'Not recommended for this role at the current level.'}
+                <p className="mt-4 text-sm text-slate-300 leading-relaxed">
+                  {verdictInfo.desc}
                 </p>
-                <p className="mt-3 text-xs text-slate-500">
-                  Duration: {meta.duration} · {transcript.length} transcript entries
+                <p className="mt-3 text-xs text-slate-400">
+                  Duration: {meta.duration} · {transcript.length} spoken exchanges
                 </p>
               </div>
             </motion.div>
@@ -359,49 +350,17 @@ export function FeedbackReport() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="glass-panel rounded-3xl p-6"
+                className="glass-panel rounded-3xl p-6 border border-white/10"
               >
-                <h3 className="text-sm font-semibold text-slate-200 mb-5">
-                  Sub-scores
-                </h3>
-                <div className="flex flex-col gap-4 mb-6">
-                  <ScoreBar
-                    label="Technical Depth"
-                    score={feedback.technical_depth}
-                    delay={0.15}
-                  />
-                  <ScoreBar
-                    label="Communication Clarity"
-                    score={feedback.communication_clarity}
-                    delay={0.25}
-                  />
-                  <ScoreBar
-                    label="Problem Solving"
-                    score={feedback.problem_solving}
-                    delay={0.35}
-                  />
-                </div>
-                <div className="h-32">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barData} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                      <XAxis type="number" domain={[0, 10]} hide />
-                      <YAxis type="category" dataKey="name" width={92} tick={{ fill: '#cbd5e1', fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <Tooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                        contentStyle={{
-                          background: 'rgba(15,23,42,0.95)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: 8,
-                          fontSize: 12,
-                        }}
-                      />
-                      <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                        {barData.map((entry, idx) => (
-                          <Cell key={idx} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                  Assessment Dimensions
+                </h2>
+                <div className="grid gap-4">
+                  <ScoreBar label="Analytical & Critical Depth" score={analytical} delay={0.1} />
+                  <ScoreBar label="Administrative Balance & OLQs" score={adminBalance} delay={0.2} />
+                  <ScoreBar label="Domain & Current Affairs Mastery" score={domain} delay={0.3} />
+                  <ScoreBar label="Articulation & Composure Under Pressure" score={articulation} delay={0.4} />
                 </div>
               </motion.div>
 
@@ -410,39 +369,23 @@ export function FeedbackReport() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.15 }}
-                className="glass-panel rounded-3xl p-6"
+                className="glass-panel rounded-3xl p-6 border border-white/10 flex flex-col justify-between"
               >
-                <h3 className="text-sm font-semibold text-slate-200 mb-5">
-                  Competency Radar
-                </h3>
-                <div className="h-56">
+                <h2 className="text-base font-bold text-white mb-2">
+                  Competency Radar Profile
+                </h2>
+                <div className="w-full h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData} outerRadius="75%">
+                    <RadarChart data={radarData}>
                       <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                      <PolarAngleAxis
-                        dataKey="axis"
-                        tick={{ fill: '#cbd5e1', fontSize: 11 }}
-                      />
-                      <PolarRadiusAxis
-                        domain={[0, 10]}
-                        tick={{ fill: '#64748b', fontSize: 10 }}
-                        axisLine={false}
-                      />
+                      <PolarAngleAxis dataKey="axis" stroke="#94a3b8" tick={{ fill: '#cbd5e1', fontSize: 11 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 10]} stroke="rgba(255,255,255,0.15)" />
                       <Radar
-                        name="Score"
+                        name="Competency"
                         dataKey="value"
-                        stroke="#a855f7"
-                        fill="#a855f7"
-                        fillOpacity={0.35}
-                        strokeWidth={2}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: 'rgba(15,23,42,0.95)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: 8,
-                          fontSize: 12,
-                        }}
+                        stroke="#818cf8"
+                        fill="#6366f1"
+                        fillOpacity={0.45}
                       />
                     </RadarChart>
                   </ResponsiveContainer>
@@ -450,195 +393,151 @@ export function FeedbackReport() {
               </motion.div>
             </div>
 
-            {/* Strengths + Improvements */}
+            {/* Strengths & Improvements */}
             <div className="grid gap-6 md:grid-cols-2">
+              {/* Strengths */}
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="glass-panel rounded-3xl p-6"
+                className="glass-panel rounded-3xl p-6 border border-white/10"
               >
-                <h3 className="text-sm font-semibold text-emerald-300 mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Key Strengths
-                </h3>
-                {feedback.key_strengths.length > 0 ? (
-                  <ul className="space-y-3">
-                    {feedback.key_strengths.map((s, i) => (
-                      <motion.li
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + i * 0.05 }}
-                        className="flex items-start gap-2.5 text-sm text-slate-200"
-                      >
-                        <CheckCircle2 className="h-4 w-4 mt-0.5 text-emerald-400 flex-shrink-0" />
-                        <span className="leading-relaxed">{s}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-slate-500 italic">
-                    No specific strengths recorded.
-                  </p>
-                )}
+                <div className="flex items-center gap-2 mb-4 text-emerald-300">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <h2 className="text-base font-bold text-white">Demonstrated Strengths</h2>
+                </div>
+                <ul className="space-y-2.5">
+                  {(feedback.key_strengths || []).map((s, i) => (
+                    <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-2 flex-shrink-0" />
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
 
+              {/* Improvements */}
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.25 }}
-                className="glass-panel rounded-3xl p-6"
+                className="glass-panel rounded-3xl p-6 border border-white/10"
               >
-                <h3 className="text-sm font-semibold text-amber-300 mb-4 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Areas for Improvement
-                </h3>
-                {feedback.areas_for_improvement.length > 0 ? (
-                  <ul className="space-y-3">
-                    {feedback.areas_for_improvement.map((s, i) => (
-                      <motion.li
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.35 + i * 0.05 }}
-                        className="flex items-start gap-2.5 text-sm text-slate-200"
-                      >
-                        <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-400 flex-shrink-0" />
-                        <span className="leading-relaxed">{s}</span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-slate-500 italic">
-                    No specific improvements recorded.
-                  </p>
-                )}
+                <div className="flex items-center gap-2 mb-4 text-amber-300">
+                  <AlertTriangle className="h-5 w-5" />
+                  <h2 className="text-base font-bold text-white">Areas for Growth & Polish</h2>
+                </div>
+                <ul className="space-y-2.5">
+                  {(feedback.areas_for_improvement || []).map((item, i) => (
+                    <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
             </div>
 
-            {/* Detailed summary */}
+            {/* Detailed Narrative Summary */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="glass-panel rounded-3xl p-6 sm:p-8"
+              className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10"
             >
-              <h3 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Detailed Summary
-              </h3>
-              <div className="prose prose-invert max-w-none">
-                {feedback.detailed_summary
-                  .split(/\n\n+/)
-                  .filter((p) => p.trim().length > 0)
-                  .map((para, i) => (
-                    <p
-                      key={i}
-                      className="text-sm leading-relaxed text-slate-300 mb-3 last:mb-0"
-                    >
-                      {para.trim()}
-                    </p>
-                  ))}
+              <h2 className="text-lg font-bold text-white mb-3">
+                Board Narrative & Detailed Performance Appraisal
+              </h2>
+              <div className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
+                {feedback.detailed_summary}
               </div>
             </motion.div>
 
-            {/* Full transcript accordion */}
+            {/* Transcript Accordion */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.35 }}
-              className="glass-panel rounded-3xl p-6"
+              className="glass-panel rounded-3xl p-6 border border-white/10"
             >
-              <Accordion type="single" collapsible>
-                <AccordionItem value="transcript" className="border-b-0">
-                  <AccordionTrigger className="text-sm font-semibold text-slate-200 hover:no-underline">
-                    <span className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Full Transcript ({transcript.length} messages)
-                    </span>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="transcript" className="border-none">
+                  <AccordionTrigger className="hover:no-underline py-0">
+                    <div className="flex items-center gap-2 text-left">
+                      <h2 className="text-base font-bold text-white">
+                        Spoken Interview Transcript ({transcript.length} exchanges)
+                      </h2>
+                    </div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="max-h-96 overflow-y-auto custom-scroll pr-2 mt-3 space-y-3">
-                      {transcript.length === 0 ? (
-                        <p className="text-sm text-slate-500 italic text-center py-6">
-                          No transcript captured.
-                        </p>
-                      ) : (
-                        transcript.map((entry) => {
+                  <AccordionContent className="pt-5">
+                    {transcript.length === 0 ? (
+                      <p className="text-sm text-slate-400">No transcript recorded for this session.</p>
+                    ) : (
+                      <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        {transcript.map((entry) => {
                           const isUser = entry.role === 'user';
                           return (
                             <div
                               key={entry.id}
                               className={cn(
-                                'flex flex-col',
-                                isUser ? 'items-end' : 'items-start',
+                                'p-3 rounded-xl border text-sm',
+                                isUser
+                                  ? 'bg-indigo-500/10 border-indigo-400/20 text-indigo-100 ml-4'
+                                  : 'bg-white/5 border-white/10 text-slate-200 mr-4',
                               )}
                             >
-                              <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
-                                {isUser ? 'You' : 'Interviewer'} ·{' '}
-                                {new Date(entry.timestamp).toLocaleTimeString()}
+                              <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                                <span className="font-semibold">
+                                  {isUser ? meta.name : 'Board Panelist'}
+                                </span>
+                                <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
-                              <div
-                                className={cn(
-                                  'px-3 py-2 rounded-xl text-sm border max-w-[85%] break-words',
-                                  isUser
-                                    ? 'bg-emerald-500/10 border-emerald-400/20 text-emerald-50'
-                                    : 'bg-indigo-500/10 border-indigo-400/20 text-indigo-50',
-                                )}
-                              >
-                                {entry.text}
-                              </div>
+                              <p className="leading-relaxed">{entry.text}</p>
                             </div>
                           );
-                        })
-                      )}
-                    </div>
+                        })}
+                      </div>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
             </motion.div>
 
             {/* Action buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3 no-print"
-            >
+            <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
               <Button
-                size="lg"
-                onClick={handlePrint}
-                variant="outline"
-                className="flex-1 h-12 bg-white/5 border-white/10 hover:bg-white/10"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
-              <Button
-                size="lg"
-                onClick={handleCopyMarkdown}
-                variant="outline"
-                className="flex-1 h-12 bg-white/5 border-white/10 hover:bg-white/10"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                {copied ? 'Copied!' : 'Copy Markdown'}
-              </Button>
-              <Button
-                size="lg"
                 onClick={reset}
-                className="flex-1 h-12 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white"
+                size="lg"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg h-12 px-6 rounded-xl font-semibold"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Start New Interview
+                Start Another Mock Interview
               </Button>
-            </motion.div>
+              <Button
+                onClick={handleCopyMarkdown}
+                variant="outline"
+                size="lg"
+                className="bg-white/5 border-white/10 hover:bg-white/10 h-12 px-5 rounded-xl text-slate-200"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                {copied ? 'Copied Report!' : 'Copy Markdown Report'}
+              </Button>
+              <Button
+                onClick={handlePrint}
+                variant="outline"
+                size="lg"
+                className="bg-white/5 border-white/10 hover:bg-white/10 h-12 px-5 rounded-xl text-slate-200"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print / Save PDF
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      <footer className="mt-auto px-4 py-6 text-center text-xs text-slate-500 no-print">
-        Powered by Google Gemini Live API · Feedback generated by AI
+      <footer className="mt-auto px-4 py-6 text-center text-xs text-slate-500 border-t border-white/5">
+        Competitive Exams AI Voice Interview Simulator · Powered by Google Gemini Live API
       </footer>
     </main>
   );

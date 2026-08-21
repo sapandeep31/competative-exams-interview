@@ -1,75 +1,75 @@
-import type { Feedback, HiringVerdict } from '@/core/state/types';
+import type { ExamVerdict, Feedback, HiringVerdict } from '@/core/state/types';
 
-/**
- * Tool declaration sent to Gemini in the `setup` message.
- *
- * NOTE: Gemini Live API uses uppercase type names ("OBJECT", "STRING", "NUMBER",
- * "ARRAY", "BOOLEAN") rather than the JSON Schema lowercase convention.
- */
 export const END_INTERVIEW_TOOL = {
   function_declarations: [
     {
       name: 'end_interview_and_generate_feedback',
       description:
-        'Call this function exactly ONCE when the interview is complete — either because the candidate explicitly asked to end it, or because you have asked 8-12 substantive questions and gathered enough signal. Calling this function ends the session and shows the candidate their feedback scorecard.',
+        'Call this function exactly ONCE when the competitive exam interview is complete — either because the candidate asked to conclude or after asking 8-12 substantive questions across personal background, current affairs, policy/domain knowledge, and ethical/situational dilemmas.',
       parameters: {
         type: 'OBJECT',
         properties: {
           overall_score: {
             type: 'NUMBER',
             description:
-              'Overall interview score from 0 to 100, weighted across technical depth, communication, and problem solving.',
+              'Overall interview marks/score from 0 to 100, calibrated against the standards of the competitive exam board.',
           },
-          hiring_verdict: {
+          verdict: {
             type: 'STRING',
-            description: 'Final hiring recommendation.',
+            description: 'Board recommendation status.',
             enum: [
-              'Strong Hire',
-              'Hire',
-              'Leaning Hire',
-              'Leaning No Hire',
-              'No Hire',
-            ] as HiringVerdict[],
+              'Recommended (Top Merit)',
+              'Recommended (Service List)',
+              'Borderline / Reserve List',
+              'Needs Polish',
+              'Not Recommended',
+            ] as ExamVerdict[],
           },
-          technical_depth: {
+          analytical_depth: {
             type: 'NUMBER',
             description:
-              'Sub-score for technical depth, domain knowledge, and code/system reasoning. 0 to 10.',
+              'Score for critical thinking, logical reasoning, and depth of analysis. 0 to 10.',
           },
-          communication_clarity: {
+          administrative_balance: {
             type: 'NUMBER',
             description:
-              'Sub-score for clarity, concision, and structure of communication. 0 to 10.',
+              'Score for balanced judgment, ethical integrity, officer-like qualities (OLQs), and public empathy. 0 to 10.',
           },
-          problem_solving: {
+          domain_knowledge: {
             type: 'NUMBER',
             description:
-              'Sub-score for problem decomposition, reasoning under ambiguity, and tradeoff analysis. 0 to 10.',
+              'Score for current affairs, constitutional/economic/defence/academic subject mastery. 0 to 10.',
+          },
+          articulation_composure: {
+            type: 'NUMBER',
+            description:
+              'Score for clarity of expression, calmness, and poise under stress. 0 to 10.',
           },
           key_strengths: {
             type: 'ARRAY',
             items: { type: 'STRING' },
             description:
-              '3-5 specific, concrete strengths the candidate demonstrated during the interview.',
+              '3-5 specific, concrete strengths demonstrated by the candidate during the interview.',
           },
           areas_for_improvement: {
             type: 'ARRAY',
             items: { type: 'STRING' },
             description:
-              '3-5 specific, actionable areas where the candidate could improve.',
+              '3-5 specific, actionable suggestions for candidate improvement.',
           },
           detailed_summary: {
             type: 'STRING',
             description:
-              'A 2-3 paragraph narrative summary of the candidate performance, highlighting notable moments and the rationale for the verdict. Plain prose, no markdown.',
+              'A 2-3 paragraph objective performance appraisal summarizing candidate suitability, notable answers, and board rationale. Plain prose, no markdown.',
           },
         },
         required: [
           'overall_score',
-          'hiring_verdict',
-          'technical_depth',
-          'communication_clarity',
-          'problem_solving',
+          'verdict',
+          'analytical_depth',
+          'administrative_balance',
+          'domain_knowledge',
+          'articulation_composure',
           'key_strengths',
           'areas_for_improvement',
           'detailed_summary',
@@ -79,12 +79,12 @@ export const END_INTERVIEW_TOOL = {
   ],
 };
 
-const VALID_VERDICTS: HiringVerdict[] = [
-  'Strong Hire',
-  'Hire',
-  'Leaning Hire',
-  'Leaning No Hire',
-  'No Hire',
+const VALID_EXAM_VERDICTS: ExamVerdict[] = [
+  'Recommended (Top Merit)',
+  'Recommended (Service List)',
+  'Borderline / Reserve List',
+  'Needs Polish',
+  'Not Recommended',
 ];
 
 function clampNumber(v: unknown, min: number, max: number): number {
@@ -100,33 +100,48 @@ function toStringArray(v: unknown): string[] {
     .filter((s) => s.trim().length > 0);
 }
 
-/**
- * Validate the raw args returned by Gemini's toolCall and coerce into a
- * strongly-typed Feedback object. Falls back to safe defaults on malformed data.
- */
 export function handleEndInterviewToolCall(
   args: Record<string, unknown> | undefined,
 ): Feedback {
   const a = args ?? {};
 
-  const verdictRaw = String(a.hiring_verdict ?? '');
-  const hiring_verdict: HiringVerdict = (VALID_VERDICTS as string[]).includes(
-    verdictRaw,
-  )
-    ? (verdictRaw as HiringVerdict)
-    : 'No Hire';
+  const verdictRaw = String(a.verdict ?? a.hiring_verdict ?? '');
+  let verdict: ExamVerdict = 'Not Recommended';
+  if ((VALID_EXAM_VERDICTS as string[]).includes(verdictRaw)) {
+    verdict = verdictRaw as ExamVerdict;
+  } else if (verdictRaw.toLowerCase().includes('strong') || verdictRaw.toLowerCase().includes('top')) {
+    verdict = 'Recommended (Top Merit)';
+  } else if (verdictRaw.toLowerCase().includes('hire') || verdictRaw.toLowerCase().includes('recommend')) {
+    verdict = 'Recommended (Service List)';
+  } else if (verdictRaw.toLowerCase().includes('lean') || verdictRaw.toLowerCase().includes('border') || verdictRaw.toLowerCase().includes('reserve')) {
+    verdict = 'Borderline / Reserve List';
+  } else if (verdictRaw.toLowerCase().includes('polish') || verdictRaw.toLowerCase().includes('improve')) {
+    verdict = 'Needs Polish';
+  }
+
+  const analytical = clampNumber(a.analytical_depth ?? a.problem_solving ?? a.technical_depth, 0, 10);
+  const adminBalance = clampNumber(a.administrative_balance ?? a.technical_depth ?? 5, 0, 10);
+  const domain = clampNumber(a.domain_knowledge ?? a.technical_depth ?? 5, 0, 10);
+  const articulation = clampNumber(a.articulation_composure ?? a.communication_clarity, 0, 10);
 
   return {
     overall_score: Math.round(clampNumber(a.overall_score, 0, 100)),
-    hiring_verdict,
-    technical_depth: clampNumber(a.technical_depth, 0, 10),
-    communication_clarity: clampNumber(a.communication_clarity, 0, 10),
-    problem_solving: clampNumber(a.problem_solving, 0, 10),
+    verdict,
+    hiring_verdict: verdict as HiringVerdict,
+    analytical_depth: analytical,
+    administrative_balance: adminBalance,
+    domain_knowledge: domain,
+    articulation_composure: articulation,
+    // Aliases
+    technical_depth: domain,
+    communication_clarity: articulation,
+    problem_solving: analytical,
+
     key_strengths: toStringArray(a.key_strengths).slice(0, 6),
     areas_for_improvement: toStringArray(a.areas_for_improvement).slice(0, 6),
     detailed_summary:
       typeof a.detailed_summary === 'string' && a.detailed_summary.trim()
         ? a.detailed_summary.trim()
-        : 'The interview ended without a detailed evaluation from the interviewer.',
+        : 'The candidate concluded the competitive exam interview simulation.',
   };
 }
