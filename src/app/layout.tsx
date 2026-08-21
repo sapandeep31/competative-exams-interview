@@ -27,6 +27,13 @@ export const metadata: Metadata = {
     "Voice Interview Simulator",
   ],
   authors: [{ name: "Competitive Exams AI Board" }],
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
