@@ -207,6 +207,21 @@ export class GeminiLiveClient {
     });
   }
 
+  /** Stream a base64 JPEG video frame to the server (1 FPS vision context). */
+  sendVideo(base64Jpeg: string): void {
+    if (!this.setupAcknowledged || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    this.sendRaw({
+      realtime_input: {
+        video: {
+          mime_type: 'image/jpeg',
+          data: base64Jpeg,
+        },
+      },
+    });
+  }
+
   /** Signal a barge-in (user started speaking while AI was talking). */
   sendInterrupt(): void {
     if (!this.setupAcknowledged || !this.ws || this.ws.readyState !== WebSocket.OPEN) {

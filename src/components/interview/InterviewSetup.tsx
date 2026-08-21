@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import {
   Mic,
   MicOff,
+  Video,
+  VideoOff,
   Eye,
   EyeOff,
   KeyRound,
@@ -21,6 +23,7 @@ import {
   Building2,
   SlidersHorizontal,
   FileSpreadsheet,
+  Camera,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +36,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useInterviewStore } from '@/core/state/useInterviewStore';
-import type { ExamCategory, SimulationMode } from '@/core/state/types';
+import type { ExamCategory, InputMode, SimulationMode } from '@/core/state/types';
 import { AudioRecorder } from '@/core/audio/AudioRecorder';
 import { cn } from '@/lib/utils';
 
@@ -169,6 +172,7 @@ export function InterviewSetup() {
   const [name, setName] = useState('');
   const [selectedExam, setSelectedExam] = useState<ExamCategory>('UPSC Civil Services (IAS/IPS)');
   const [selectedMode, setSelectedMode] = useState<SimulationMode>('Comprehensive Board Mock');
+  const [inputMode, setInputMode] = useState<InputMode>('audio_only');
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
 
@@ -178,11 +182,17 @@ export function InterviewSetup() {
   const [optionalSubject, setOptionalSubject] = useState('');
   const [hobbies, setHobbies] = useState('');
 
+  // Mic state
   const [micState, setMicState] = useState<MicMeterState>({
     active: false,
     level: 0,
     error: null,
   });
+
+  // Camera preview state
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const meterRecorderRef = useRef<AudioRecorder | null>(null);
   const [starting, setStarting] = useState(false);
@@ -217,10 +227,47 @@ export function InterviewSetup() {
     setMicState((s) => ({ ...s, active: false, level: 0 }));
   }, []);
 
+  const startCameraPreview = useCallback(async () => {
+    try {
+      setCameraError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
+      });
+      if (previewVideoRef.current) {
+        previewVideoRef.current.srcObject = stream;
+        await previewVideoRef.current.play();
+      }
+      setCameraActive(true);
+    } catch (err) {
+      const msg =
+        err instanceof DOMException && err.name === 'NotAllowedError'
+          ? 'Camera permission denied. Please allow webcam access in your browser.'
+          : err instanceof Error
+            ? err.message
+            : 'Failed to access webcam.';
+      setCameraError(msg);
+      setCameraActive(false);
+    }
+  }, []);
+
+  const stopCameraPreview = useCallback(() => {
+    if (previewVideoRef.current && previewVideoRef.current.srcObject) {
+      const stream = previewVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((t) => t.stop());
+      previewVideoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  }, []);
+
   useEffect(() => {
     return () => {
       meterRecorderRef.current?.stop();
       meterRecorderRef.current = null;
+      if (previewVideoRef.current && previewVideoRef.current.srcObject) {
+        const stream = previewVideoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((t) => t.stop());
+        previewVideoRef.current.srcObject = null;
+      }
     };
   }, []);
 
@@ -261,11 +308,13 @@ export function InterviewSetup() {
       }
 
       stopMeter();
+      stopCameraPreview();
 
       setConfig({
         candidateName: name.trim(),
         examCategory: selectedExam,
         simulationMode: selectedMode,
+        inputMode,
         role: selectedExam,
         level: selectedMode,
         background: {
@@ -299,13 +348,13 @@ export function InterviewSetup() {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-medium mb-3">
               <Sparkles className="h-3.5 w-3.5" />
-              India's Premier Competitive Exams AI Voice Board Simulator
+              India's Premier Competitive Exams AI Voice & Video Board Simulator
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-violet-200 bg-clip-text text-transparent">
               Competitive Exams Interview Simulator
             </h1>
             <p className="mt-3 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-              Simulate realistic board interviews for UPSC, SSB, RBI, IIM, State PSC, and Judiciary. Speak naturally via real-time voice and receive an in-depth scorecard with OLQ & administrative radar analysis.
+              Simulate realistic board interviews for UPSC, SSB, RBI, IIM, State PSC, and Judiciary. Supports real-time Voice and optional Webcam video vision for body language, eye contact, and vocal fluency assessment.
             </p>
           </div>
 
@@ -316,9 +365,9 @@ export function InterviewSetup() {
                 <div className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">
                   1
                 </div>
-                <h2 className="text-lg font-semibold text-white">Candidate Details</h2>
+                <h2 className="text-lg font-semibold text-white">Candidate Details & Input Devices</h2>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4 mb-4">
                 <div className="grid gap-1.5">
                   <Label htmlFor="name" className="text-xs font-medium text-slate-300">
                     Candidate Full Name *
@@ -370,6 +419,115 @@ export function InterviewSetup() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Input Mode Selector: Audio Only vs Audio + Video */}
+              <div className="pt-3 border-t border-white/5">
+                <Label className="text-xs font-medium text-slate-300 mb-2 block">
+                  Interview Modality (Choose Practice Mode)
+                </Label>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInputMode('audio_only');
+                      stopCameraPreview();
+                    }}
+                    className={cn(
+                      'p-3.5 rounded-xl border text-left transition-all',
+                      inputMode === 'audio_only'
+                        ? 'border-indigo-400 bg-indigo-500/15 text-white shadow-md shadow-indigo-500/10'
+                        : 'border-white/10 bg-white/[0.02] hover:bg-white/5 text-slate-300',
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mic className="h-4 w-4 text-indigo-400" />
+                      <span className="font-semibold text-sm">Voice Only (Microphone)</span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Standard audio stream. Evaluates verbal fluency, logic, and policy reasoning.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInputMode('video_audio');
+                      if (!cameraActive) void startCameraPreview();
+                    }}
+                    className={cn(
+                      'p-3.5 rounded-xl border text-left transition-all',
+                      inputMode === 'video_audio'
+                        ? 'border-emerald-400 bg-emerald-500/15 text-white shadow-md shadow-emerald-500/10'
+                        : 'border-white/10 bg-white/[0.02] hover:bg-white/5 text-slate-300',
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Camera className="h-4 w-4 text-emerald-400" />
+                      <span className="font-semibold text-sm">Video & Voice (Webcam + Mic)</span>
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-[10px]">
+                        AI Vision
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Streams video frames (~1 FPS) to evaluate posture, eye contact, gestures & visual poise.
+                    </p>
+                  </button>
+                </div>
+
+                {/* Webcam Test & Preview Box (if video_audio is selected) */}
+                {inputMode === 'video_audio' && (
+                  <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Camera className="h-4 w-4 text-emerald-400" />
+                        <span className="text-sm font-semibold text-white">Camera Check & Framing Preview</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={cameraActive ? stopCameraPreview : startCameraPreview}
+                        className="text-xs h-8 bg-white/5 border-white/10 hover:bg-white/10"
+                      >
+                        {cameraActive ? (
+                          <>
+                            <VideoOff className="h-3.5 w-3.5 mr-1 text-red-400" />
+                            Turn Off Camera
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                            Start Camera Test
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="relative w-full max-w-sm mx-auto aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/10 flex items-center justify-center">
+                      <video
+                        ref={previewVideoRef}
+                        playsInline
+                        muted
+                        className={cn(
+                          'w-full h-full object-cover -scale-x-100',
+                          !cameraActive && 'hidden',
+                        )}
+                      />
+                      {!cameraActive && (
+                        <div className="text-center p-4 text-slate-400 text-xs">
+                          <Camera className="h-8 w-8 mx-auto mb-2 text-slate-600" />
+                          Click <span className="text-emerald-300">Start Camera Test</span> to preview your video framing and posture before connecting.
+                        </div>
+                      )}
+                    </div>
+                    {cameraError && (
+                      <p className="text-xs text-amber-300 mt-2 text-center bg-amber-500/10 p-2 rounded-lg border border-amber-400/20">
+                        {cameraError}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -634,7 +792,7 @@ export function InterviewSetup() {
 
             <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mt-2">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              Low-latency real-time voice streaming with Google Gemini Live API. Speak naturally as in an actual board interview.
+              Low-latency real-time streaming with Google Gemini Live API. {inputMode === 'video_audio' ? 'Streaming Audio & Webcam Vision (1 FPS).' : 'Streaming Audio.'}
             </div>
           </div>
         </motion.div>

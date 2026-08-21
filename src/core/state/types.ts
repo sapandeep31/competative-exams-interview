@@ -1,4 +1,4 @@
-// Strongly-typed data models for Competitive Exams Voice Interview Simulation.
+// Strongly-typed data models for Competitive Exams Voice & Video Interview Simulation.
 
 export type Phase = 'setup' | 'live' | 'feedback';
 
@@ -16,6 +16,8 @@ export type SimulationMode =
   | 'Situational Crisis & Ethical Dilemmas'
   | 'Current Affairs & Policy Grilling';
 
+export type InputMode = 'audio_only' | 'video_audio';
+
 // For backward compatibility across existing references
 export type Role = ExamCategory;
 export type ExperienceLevel = SimulationMode;
@@ -31,6 +33,7 @@ export interface InterviewConfig {
   candidateName: string;
   examCategory: ExamCategory;
   simulationMode: SimulationMode;
+  inputMode: InputMode;
   background?: CandidateBackground;
   // Aliases for compatibility
   role: ExamCategory;
@@ -56,6 +59,13 @@ export interface Feedback {
   administrative_balance: number; // 0-10 (Judgment & OLQs)
   domain_knowledge: number; // 0-10 (Current affairs & Subject)
   articulation_composure: number; // 0-10 (Poise & Communication)
+
+  // Audio & Non-Verbal / Video Delivery Analysis
+  speech_fluency?: number; // 0-10 (Fluency, stammering, pauses)
+  body_language_poise?: number; // 0-10 (Posture, eye contact, gestures)
+  vocal_cues?: string[]; // e.g. ["Stammered on repo rate question", "Calm vocal cadence"]
+  non_verbal_cues?: string[]; // e.g. ["Maintained direct eye contact", "Fidgeted hands during stress test"]
+
   // Legacy aliases
   technical_depth?: number;
   communication_clarity?: number;

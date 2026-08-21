@@ -6,12 +6,16 @@ import { toast } from 'sonner';
 import {
   Mic,
   MicOff,
+  Video,
+  VideoOff,
   PhoneOff,
   Clock,
   RefreshCw,
   User,
   BadgeCheck,
   Loader2,
+  Camera,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -70,11 +74,20 @@ export function LiveSessionView() {
     'connecting' | 'connected' | 'failed'
   >('connecting');
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(
+    config?.inputMode === 'video_audio',
+  );
 
   // Engine instances — kept in refs so they survive re-renders.
   const recorderRef = useRef<AudioRecorder | null>(null);
   const playerRef = useRef<AudioPlayer | null>(null);
   const clientRef = useRef<GeminiLiveClient | null>(null);
+
+  // Video streaming refs
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
+  const videoStreamRef = useRef<MediaStream | null>(null);
+  const videoIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Accumulate streaming transcript fragments.
   const inputBufferRef = useRef<string>('');
@@ -89,7 +102,6 @@ export function LiveSessionView() {
       const text = inputBufferRef.current.trim();
       if (!text) return;
       const now = Date.now();
-      // Debounce: only flush if 600ms passed since last fragment, unless forced.
       if (!force && now - lastInputFlushRef.current < 600) return;
       lastInputFlushRef.current = now;
       inputBufferRef.current = '';
@@ -115,9 +127,19 @@ export function LiveSessionView() {
     (feedback: Feedback) => {
       if (endedRef.current) return;
       endedRef.current = true;
-      // Final flush of any pending transcript text.
       flushInputBuffer(true);
       flushOutputBuffer(true);
+
+      // Stop video streaming & tracks
+      if (videoIntervalRef.current) {
+        clearInterval(videoIntervalRef.current);
+        videoIntervalRef.current = null;
+      }
+      if (videoStreamRef.current) {
+        videoStreamRef.current.getTracks().forEach((t) => t.stop());
+        videoStreamRef.current = null;
+      }
+
       setFeedback(feedback);
       setPhase('feedback');
     },
@@ -140,6 +162,10 @@ export function LiveSessionView() {
             administrative_balance: 5,
             domain_knowledge: 5,
             articulation_composure: 5,
+            speech_fluency: 5,
+            body_language_poise: 5,
+            vocal_cues: ['Participated in the live audio dialogue'],
+            non_verbal_cues: ['Maintained attention during questioning'],
             technical_depth: 5,
             communication_clarity: 5,
             problem_solving: 5,
@@ -158,8 +184,16 @@ export function LiveSessionView() {
     [endInterview],
   );
 
-  // --- Connect to Gemini Live ---
+  // --- Teardown engine ---
   const teardown = useCallback(() => {
+    if (videoIntervalRef.current) {
+      clearInterval(videoIntervalRef.current);
+      videoIntervalRef.current = null;
+    }
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach((t) => t.stop());
+      videoStreamRef.current = null;
+    }
     recorderRef.current?.stop();
     recorderRef.current = null;
     playerRef.current?.dispose();
@@ -206,7 +240,6 @@ export function LiveSessionView() {
       sampleRate: 24000,
       onLevel: (rms) => setAiLevel(rms),
       onPlaybackEnd: () => {
-        // AI has finished speaking — wait for the user to respond.
         setAudioState('thinking');
       },
     });
@@ -217,7 +250,6 @@ export function LiveSessionView() {
       sampleRate: 16000,
       onChunk: (b64) => {
         clientRef.current?.sendAudio(b64);
-        // Local barge-in detection while AI is speaking.
         const rms = recorder.getRMS();
         if (
           rms > BARGE_IN_RMS_THRESHOLD &&
@@ -243,105 +275,183 @@ export function LiveSessionView() {
     }
     recorderRef.current = recorder;
 
-    // 4. Gemini Live client.
+    // 4. Video Stream Setup (if enabled)
+    if (config.inputMode === 'video_audio') {
+      try {
+        const vStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
+        });
+        videoStreamRef.current = vStream;
+        if (videoElementRef.current) {
+          videoElementRef.current.srcObject = vStream;
+          await videoElementRef.current.play().catch(() => {});
+        }
+      } catch (vErr) {
+        console.warn('Webcam stream failed to start:', vErr);
+        toast.warning('Webcam vision unavailable — continuing with audio only.');
+      }
+    }
+
+    // 5. Gemini Live client.
     const client = new GeminiLiveClient(apiKey, config);
     client.on('open', () => {
       setConnectionState('connected');
       setAudioState('thinking');
-      toast.success('Connected', {
-        description: 'The interviewer is ready — say hello!',
-      });
+
+      // Start 1 FPS Video Capture Pipeline if video stream is active
+      if (videoStreamRef.current) {
+        if (!offscreenCanvasRef.current) {
+          const cvs = document.createElement('canvas');
+          cvs.width = 640;
+          cvs.height = 480;
+          offscreenCanvasRef.current = cvs;
+        }
+
+        videoIntervalRef.current = setInterval(() => {
+          if (!clientRef.current || !videoElementRef.current || !videoElementRef.current.videoWidth) return;
+          const cvs = offscreenCanvasRef.current;
+          if (!cvs) return;
+          const ctx = cvs.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(videoElementRef.current, 0, 0, cvs.width, cvs.height);
+            const dataUrl = cvs.toDataURL('image/jpeg', 0.6);
+            const base64Data = dataUrl.split(',')[1];
+            if (base64Data) {
+              clientRef.current.sendVideo(base64Data);
+            }
+          }
+        }, 1000); // 1 Frame Per Second
+      }
     });
+
     client.on('audio', (b64) => {
-      void player.enqueueChunk(b64);
-      // Set state to 'speaking' once we receive audio.
+      playerRef.current?.enqueueChunk(b64);
       setAudioState('speaking');
     });
+
     client.on('inputTranscript', (text) => {
-      inputBufferRef.current += text;
+      inputBufferRef.current += ' ' + text;
       flushInputBuffer(false);
-      if (text.trim()) setAudioState('listening');
-    });
-    client.on('outputTranscript', (text) => {
-      outputBufferRef.current += text;
-      flushOutputBuffer(false);
-    });
-    client.on('interrupted', () => {
-      player.stopAndClear();
       setAudioState('listening');
     });
+
+    client.on('outputTranscript', (text) => {
+      outputBufferRef.current += ' ' + text;
+      flushOutputBuffer(false);
+      setAudioState('speaking');
+    });
+
+    client.on('interrupted', () => {
+      playerRef.current?.stopAndClear();
+      setAudioState('listening');
+    });
+
     client.on('toolCall', (name, args) => handleToolCall(name, args));
     client.on('error', (msg) => {
       console.error('[GeminiLiveClient] error', msg);
       toast.error('Connection error', { description: msg });
       setError(msg);
-      // Don't auto-teardown on transient errors; let user decide.
     });
+
     client.on('close', (code, reason) => {
       console.log('[GeminiLiveClient] closed', code, reason);
-      // If closed unexpectedly mid-session, surface but don't crash.
       if (!endedRef.current && phase === 'live') {
         setConnectionState('failed');
       }
     });
 
-    clientRef.current = client;
     client.connect();
+    clientRef.current = client;
   }, [
     config,
+    endInterview,
+    flushInputBuffer,
+    flushOutputBuffer,
+    handleToolCall,
     phase,
     setAiLevel,
     setAudioState,
     setError,
     setMicLevel,
-    handleToolCall,
-    flushInputBuffer,
-    flushOutputBuffer,
   ]);
 
-  // Boot the session on mount.
-  useEffect(() => {
-    void connect();
-    return () => {
-      teardown();
-    };
-    // connect/teardown are stable refs on first mount — intentional empty deps.
-  }, []);
-
-  // --- Timer ---
-  useEffect(() => {
-    if (phase !== 'live') return;
-    const id = setInterval(() => tick(), 1000);
-    return () => clearInterval(id);
-  }, [phase, tick]);
-
-  // --- Mute toggle ---
-  useEffect(() => {
-    const r = recorderRef.current;
-    if (!r) return;
-    if (isMuted) {
-      r.mute();
+  // Toggle Camera in live session
+  const toggleCamera = useCallback(async () => {
+    if (isVideoEnabled) {
+      if (videoIntervalRef.current) {
+        clearInterval(videoIntervalRef.current);
+        videoIntervalRef.current = null;
+      }
+      if (videoStreamRef.current) {
+        videoStreamRef.current.getTracks().forEach((t) => t.stop());
+        videoStreamRef.current = null;
+      }
+      if (videoElementRef.current) {
+        videoElementRef.current.srcObject = null;
+      }
+      setIsVideoEnabled(false);
+      toast.info('Camera turned off');
     } else {
-      r.unmute();
-    }
-  }, [isMuted]);
+      try {
+        const vStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
+        });
+        videoStreamRef.current = vStream;
+        if (videoElementRef.current) {
+          videoElementRef.current.srcObject = vStream;
+          await videoElementRef.current.play().catch(() => {});
+        }
+        setIsVideoEnabled(true);
 
-  // --- Standard LLM evaluation on manual end or disconnect ---
+        if (!offscreenCanvasRef.current) {
+          const cvs = document.createElement('canvas');
+          cvs.width = 640;
+          cvs.height = 480;
+          offscreenCanvasRef.current = cvs;
+        }
+
+        videoIntervalRef.current = setInterval(() => {
+          if (!clientRef.current || !videoElementRef.current || !videoElementRef.current.videoWidth) return;
+          const cvs = offscreenCanvasRef.current;
+          if (!cvs) return;
+          const ctx = cvs.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(videoElementRef.current, 0, 0, cvs.width, cvs.height);
+            const dataUrl = cvs.toDataURL('image/jpeg', 0.6);
+            const base64Data = dataUrl.split(',')[1];
+            if (base64Data) {
+              clientRef.current.sendVideo(base64Data);
+            }
+          }
+        }, 1000);
+
+        toast.success('Camera connected & streaming AI vision');
+      } catch (err) {
+        toast.error('Failed to enable camera', {
+          description: err instanceof Error ? err.message : 'Permission denied',
+        });
+      }
+    }
+  }, [isVideoEnabled]);
+
+  // Request standard LLM evaluation on manual end
   const requestStandardEvaluation = useCallback(async () => {
-    if (endedRef.current) return;
+    if (!config) return;
     setIsEvaluating(true);
-    teardown();
     flushInputBuffer(true);
     flushOutputBuffer(true);
 
+    const currentTranscript = useInterviewStore.getState().transcript;
+    teardown();
+
     try {
-      const currentTranscript = useInterviewStore.getState().transcript;
       const res = await fetch('/api/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           config,
           transcript: currentTranscript,
+          apiKey: config.apiKey,
         }),
       });
 
@@ -366,6 +476,10 @@ export function LiveSessionView() {
         administrative_balance: 7,
         domain_knowledge: 6,
         articulation_composure: 7,
+        speech_fluency: 7,
+        body_language_poise: 7,
+        vocal_cues: ['Maintained consistent verbal pacing'],
+        non_verbal_cues: ['Direct engagement during board questioning'],
         technical_depth: 6,
         communication_clarity: 7,
         problem_solving: 6,
@@ -380,14 +494,27 @@ export function LiveSessionView() {
     }
   }, [config, endInterview, flushInputBuffer, flushOutputBuffer, teardown]);
 
-  // --- Manual end ---
+  // Connect on mount
+  useEffect(() => {
+    void connect();
+    return () => teardown();
+  }, [connect, teardown]);
+
+  // Elapsed timer tick (1 second)
+  useEffect(() => {
+    if (connectionState !== 'connected') return;
+    const interval = setInterval(() => tick(), 1000);
+    return () => clearInterval(interval);
+  }, [connectionState, tick]);
+
+  // Manual end
   const handleManualEnd = useCallback(() => {
     if (endedRef.current || isEvaluating) return;
     toast.info('Generating your comprehensive feedback scorecard...');
     void requestStandardEvaluation();
   }, [isEvaluating, requestStandardEvaluation]);
 
-  // --- Retry on failure ---
+  // Retry on failure
   const handleRetry = useCallback(() => {
     teardown();
     void connect();
@@ -429,11 +556,17 @@ export function LiveSessionView() {
         >
           {mode}
         </Badge>
+        {config.inputMode === 'video_audio' && (
+          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-[10px] gap-1">
+            <Camera className="h-2.5 w-2.5" />
+            Vision Active
+          </Badge>
+        )}
       </div>
     );
   }, [config]);
 
-  const orbSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 260 : 340;
+  const orbSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 240 : 300;
 
   return (
     <main className="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col">
@@ -471,19 +604,20 @@ export function LiveSessionView() {
       </header>
 
       {/* Main content */}
-      <div className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
-        <div className="max-w-6xl mx-auto grid gap-6 lg:grid-cols-[1fr_minmax(360px,420px)]">
-          {/* Left: orb + controls */}
-          <motion.section
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col">
+        <div className="grid lg:grid-cols-12 gap-6 flex-1 items-stretch">
+          {/* Left panel: Board Visualizer & Webcam */}
+          <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="glass-panel rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center gap-8 min-h-[480px]"
+            transition={{ duration: 0.4 }}
+            className="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-between gap-6 min-h-[480px] relative overflow-hidden"
           >
-            <div className="text-center">
+            {/* Header info */}
+            <div className="text-center w-full">
               {config && BOARD_OFFICERS[config.examCategory || config.role] && (
                 <div className="mb-2">
-                  <span className="text-xs uppercase tracking-widest font-semibold text-indigo-400">
+                  <span className="text-[11px] uppercase tracking-widest font-semibold text-indigo-400">
                     Active Board Interviewer
                   </span>
                   <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
@@ -510,25 +644,48 @@ export function LiveSessionView() {
                 <span className="font-medium capitalize">
                   {audioState === 'idle' && 'Channel Ready'}
                   {audioState === 'listening' && 'Listening to your response…'}
-                  {audioState === 'thinking' && 'Board deliberating…'}
-                  {audioState === 'speaking' && 'Board questioning…'}
+                  {audioState === 'thinking' && 'Board evaluating…'}
+                  {audioState === 'speaking' && 'Board speaking…'}
                 </span>
               </div>
             </div>
 
-            <AudioBallVisualizer
-              state={audioState}
-              micLevel={micLevel}
-              aiLevel={aiLevel}
-              size={orbSize}
-            />
+            {/* Visualizer & Video Grid */}
+            <div className="relative w-full flex items-center justify-center my-auto">
+              <AudioBallVisualizer
+                state={audioState}
+                micLevel={micLevel}
+                aiLevel={aiLevel}
+                size={orbSize}
+              />
 
-            <div className="flex items-center gap-3 flex-wrap justify-center">
+              {/* Picture-in-Picture Webcam Stream */}
+              <div
+                className={cn(
+                  'absolute bottom-0 right-0 w-36 sm:w-44 aspect-video rounded-xl overflow-hidden border border-white/15 bg-black/70 shadow-2xl transition-all duration-300',
+                  !isVideoEnabled && 'hidden',
+                )}
+              >
+                <video
+                  ref={videoElementRef}
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover -scale-x-100"
+                />
+                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-emerald-300 font-mono flex items-center gap-1 border border-white/10">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Candidate Feed
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="flex items-center gap-3 flex-wrap justify-center w-full pt-2">
               <Button
                 size="lg"
                 variant={isMuted ? 'secondary' : 'outline'}
                 onClick={toggleMute}
-                className={`h-12 px-5 ${
+                className={`h-11 px-4 text-sm ${
                   isMuted
                     ? 'bg-amber-500/20 border-amber-400/40 text-amber-100 hover:bg-amber-500/30'
                     : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -537,25 +694,49 @@ export function LiveSessionView() {
               >
                 {isMuted ? (
                   <>
-                    <MicOff className="h-4 w-4 mr-2" />
+                    <MicOff className="h-4 w-4 mr-1.5" />
                     Unmute
                   </>
                 ) : (
                   <>
-                    <Mic className="h-4 w-4 mr-2" />
-                    Mute
+                    <Mic className="h-4 w-4 mr-1.5 text-indigo-300" />
+                    Mute Mic
                   </>
                 )}
               </Button>
+
+              {config?.inputMode === 'video_audio' && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={toggleCamera}
+                  className={cn(
+                    'h-11 px-4 text-sm bg-white/5 border-white/10 hover:bg-white/10',
+                    isVideoEnabled && 'border-emerald-400/30 text-emerald-200',
+                  )}
+                >
+                  {isVideoEnabled ? (
+                    <>
+                      <Video className="h-4 w-4 mr-1.5 text-emerald-400" />
+                      Camera On
+                    </>
+                  ) : (
+                    <>
+                      <VideoOff className="h-4 w-4 mr-1.5 text-red-400" />
+                      Camera Off
+                    </>
+                  )}
+                </Button>
+              )}
 
               {connectionState === 'failed' && (
                 <Button
                   size="lg"
                   variant="outline"
                   onClick={handleRetry}
-                  className="h-12 px-5 bg-white/5 border-white/10 hover:bg-white/10"
+                  className="h-11 px-4 text-sm bg-white/5 border-white/10 hover:bg-white/10"
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-4 w-4 mr-1.5" />
                   Retry Connection
                 </Button>
               )}
@@ -565,7 +746,7 @@ export function LiveSessionView() {
                   <Button
                     size="lg"
                     variant="destructive"
-                    className="h-12 px-5 bg-red-600/90 hover:bg-red-600"
+                    className="h-11 px-5 bg-red-600/90 hover:bg-red-600 font-semibold"
                   >
                     <PhoneOff className="h-4 w-4 mr-2" />
                     End Interview
@@ -573,11 +754,10 @@ export function LiveSessionView() {
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-zinc-900 border-white/10 text-slate-100">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>End the interview?</AlertDialogTitle>
+                    <AlertDialogTitle>Conclude this Board Interview?</AlertDialogTitle>
                     <AlertDialogDescription className="text-slate-400">
-                      This will conclude the live conversation. Gemini will evaluate the
-                      full spoken transcript and generate your comprehensive evaluation
-                      scorecard and radar analysis.
+                      This will end the live exchange. The board will evaluate your full spoken
+                      answers, vocal fluency, and non-verbal delivery to generate your official scorecard.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -595,47 +775,47 @@ export function LiveSessionView() {
                           Evaluating...
                         </>
                       ) : (
-                        'End & Generate Report'
+                        'End & Generate Scorecard'
                       )}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-          </motion.section>
+          </motion.div>
 
-          {/* Right: transcript */}
-          <motion.section
-            initial={{ opacity: 0, x: 24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+          {/* Right panel: Live Transcript */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="lg:col-span-5 h-[480px] lg:h-auto flex flex-col"
           >
             <LiveTranscript transcript={transcript} />
-          </motion.section>
+          </motion.div>
         </div>
       </div>
 
-      {/* Evaluating Loading Overlay */}
+      {/* Evaluating overlay */}
       {isEvaluating && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-          <div className="relative mb-6">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-center px-4">
+          <div className="relative">
             <div className="h-16 w-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <BadgeCheck className="h-6 w-6 text-indigo-400 animate-pulse" />
-            </div>
+            <Sparkles className="h-6 w-6 text-indigo-400 absolute inset-0 m-auto animate-pulse" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">
-            Analyzing Transcript & Generating Scorecard...
-          </h2>
-          <p className="text-sm text-slate-400 max-w-md">
-            Gemini is reviewing your technical depth, communication clarity, and problem-solving answers to construct your detailed feedback report.
-          </p>
+          <div>
+            <h3 className="text-xl font-bold text-white mb-1">
+              Board Deliberating & Generating Appraisal
+            </h3>
+            <p className="text-sm text-slate-400 max-w-md">
+              Evaluating spoken transcript, analytical depth, vocal fluency, and non-verbal delivery cues...
+            </p>
+          </div>
         </div>
       )}
 
-      <footer className="mt-auto px-4 py-4 text-center text-xs text-slate-500">
-        Powered by Google Gemini Live API · Speak naturally to barge in
-      </footer>
+      {/* Offscreen hidden video capture element */}
+      <video ref={videoElementRef} className="hidden" playsInline muted />
     </main>
   );
 }

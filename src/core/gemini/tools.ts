@@ -45,6 +45,28 @@ export const END_INTERVIEW_TOOL = {
             description:
               'Score for clarity of expression, calmness, and poise under stress. 0 to 10.',
           },
+          speech_fluency: {
+            type: 'NUMBER',
+            description:
+              'Score for vocal delivery, stammering/hesitation control, cadence, and absence of excessive filler words. 0 to 10.',
+          },
+          body_language_poise: {
+            type: 'NUMBER',
+            description:
+              'Score for posture, eye contact, facial calmness, and physical gestures under pressure. 0 to 10.',
+          },
+          vocal_cues: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description:
+              'Specific observations regarding vocal tone, stammering, pauses, volume, and speech delivery.',
+          },
+          non_verbal_cues: {
+            type: 'ARRAY',
+            items: { type: 'STRING' },
+            description:
+              'Specific observations regarding eye contact, posture, facial expressions, and physical gestures.',
+          },
           key_strengths: {
             type: 'ARRAY',
             items: { type: 'STRING' },
@@ -124,6 +146,9 @@ export function handleEndInterviewToolCall(
   const domain = clampNumber(a.domain_knowledge ?? a.technical_depth ?? 5, 0, 10);
   const articulation = clampNumber(a.articulation_composure ?? a.communication_clarity, 0, 10);
 
+  const speechFluency = a.speech_fluency !== undefined ? clampNumber(a.speech_fluency, 0, 10) : articulation;
+  const bodyLanguage = a.body_language_poise !== undefined ? clampNumber(a.body_language_poise, 0, 10) : articulation;
+
   return {
     overall_score: Math.round(clampNumber(a.overall_score, 0, 100)),
     verdict,
@@ -132,6 +157,12 @@ export function handleEndInterviewToolCall(
     administrative_balance: adminBalance,
     domain_knowledge: domain,
     articulation_composure: articulation,
+
+    speech_fluency: speechFluency,
+    body_language_poise: bodyLanguage,
+    vocal_cues: toStringArray(a.vocal_cues),
+    non_verbal_cues: toStringArray(a.non_verbal_cues),
+
     // Aliases
     technical_depth: domain,
     communication_clarity: articulation,

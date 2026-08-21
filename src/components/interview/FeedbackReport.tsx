@@ -28,6 +28,11 @@ import {
   Landmark,
   Printer,
   Sparkles,
+  Volume2,
+  Camera,
+  Activity,
+  Eye,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -183,7 +188,19 @@ function buildMarkdown(
   lines.push(`- Administrative Judgment & OLQs: ${(feedback.administrative_balance ?? 0).toFixed(1)} / 10`);
   lines.push(`- Domain & Current Affairs Mastery: ${(feedback.domain_knowledge ?? feedback.technical_depth ?? 0).toFixed(1)} / 10`);
   lines.push(`- Articulation & Composure: ${(feedback.articulation_composure ?? feedback.communication_clarity ?? 0).toFixed(1)} / 10`);
+  lines.push(`- Speech Fluency & Vocal Pacing: ${(feedback.speech_fluency ?? 7).toFixed(1)} / 10`);
+  lines.push(`- Non-Verbal & Body Language Poise: ${(feedback.body_language_poise ?? 7).toFixed(1)} / 10`);
   lines.push('');
+  if (feedback.vocal_cues && feedback.vocal_cues.length > 0) {
+    lines.push(`## Vocal & Speech Delivery Cues`);
+    for (const v of feedback.vocal_cues) lines.push(`- ${v}`);
+    lines.push('');
+  }
+  if (feedback.non_verbal_cues && feedback.non_verbal_cues.length > 0) {
+    lines.push(`## Non-Verbal & Body Language Cues`);
+    for (const nv of feedback.non_verbal_cues) lines.push(`- ${nv}`);
+    lines.push('');
+  }
   lines.push(`## Key Demonstrated Strengths`);
   for (const s of feedback.key_strengths || []) lines.push(`- ${s}`);
   lines.push('');
@@ -242,6 +259,8 @@ export function FeedbackReport() {
   const adminBalance = feedback.administrative_balance ?? 6;
   const domain = feedback.domain_knowledge ?? feedback.technical_depth ?? 6;
   const articulation = feedback.articulation_composure ?? feedback.communication_clarity ?? 6;
+  const speechFluency = feedback.speech_fluency ?? articulation;
+  const bodyLanguage = feedback.body_language_poise ?? articulation;
 
   const currentVerdict = (feedback.verdict || feedback.hiring_verdict || 'Recommended (Service List)') as ExamVerdict;
   const verdictInfo = VERDICT_STYLES[currentVerdict] || VERDICT_STYLES['Recommended (Service List)'];
@@ -249,15 +268,10 @@ export function FeedbackReport() {
   const radarData = [
     { axis: 'Analytical Depth', value: analytical, max: 10 },
     { axis: 'Admin Balance / OLQs', value: adminBalance, max: 10 },
-    { axis: 'Domain & Current Affairs', value: domain, max: 10 },
+    { axis: 'Domain & Knowledge', value: domain, max: 10 },
     { axis: 'Articulation & Poise', value: articulation, max: 10 },
-  ];
-
-  const barData = [
-    { name: 'Analytical Depth', value: analytical, fill: scoreColor(analytical, 10) },
-    { name: 'Admin Balance / OLQs', value: adminBalance, fill: scoreColor(adminBalance, 10) },
-    { name: 'Domain & Current Affairs', value: domain, fill: scoreColor(domain, 10) },
-    { name: 'Articulation & Poise', value: articulation, fill: scoreColor(articulation, 10) },
+    { axis: 'Speech Fluency', value: speechFluency, max: 10 },
+    { axis: 'Body Language', value: bodyLanguage, max: 10 },
   ];
 
   const handleCopyMarkdown = async () => {
@@ -344,6 +358,95 @@ export function FeedbackReport() {
               </div>
             </motion.div>
 
+            {/* Vocal & Non-Verbal Delivery Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.08 }}
+              className="glass-panel rounded-3xl p-6 sm:p-8 border border-indigo-500/20 bg-indigo-950/10"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="h-5 w-5 text-indigo-400" />
+                <h2 className="text-base font-bold text-white">
+                  Audio & Non-Verbal Delivery Assessment
+                </h2>
+                <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-400/30 text-[10px] ml-auto">
+                  Fluency & Body Language
+                </Badge>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-6 mb-6">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <Volume2 className="h-4 w-4 text-emerald-400" />
+                      Speech Fluency & Stammering Control
+                    </span>
+                    <span className="text-xs font-mono font-bold text-emerald-400">
+                      {speechFluency.toFixed(1)} / 10
+                    </span>
+                  </div>
+                  <ScoreBar label="" score={speechFluency} delay={0.1} />
+                  <p className="text-[11px] text-slate-400 mt-2">
+                    Evaluates pauses, hesitation under stress, stammering control, and vocal pacing.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <Eye className="h-4 w-4 text-sky-400" />
+                      Body Language & Non-Verbal Poise
+                    </span>
+                    <span className="text-xs font-mono font-bold text-sky-400">
+                      {bodyLanguage.toFixed(1)} / 10
+                    </span>
+                  </div>
+                  <ScoreBar label="" score={bodyLanguage} delay={0.2} />
+                  <p className="text-[11px] text-slate-400 mt-2">
+                    Evaluates posture, eye contact consistency, facial calmness, and physical gestures.
+                  </p>
+                </div>
+              </div>
+
+              {/* Observed Cues Grid */}
+              <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                {feedback.vocal_cues && feedback.vocal_cues.length > 0 && (
+                  <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
+                    <span className="text-xs font-semibold text-indigo-300 flex items-center gap-1 mb-2">
+                      <Volume2 className="h-3.5 w-3.5" />
+                      Observed Vocal Cues
+                    </span>
+                    <ul className="space-y-1.5">
+                      {feedback.vocal_cues.map((c, i) => (
+                        <li key={i} className="text-xs text-slate-300 flex items-start gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {feedback.non_verbal_cues && feedback.non_verbal_cues.length > 0 && (
+                  <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5">
+                    <span className="text-xs font-semibold text-sky-300 flex items-center gap-1 mb-2">
+                      <Camera className="h-3.5 w-3.5" />
+                      Observed Body Language Cues
+                    </span>
+                    <ul className="space-y-1.5">
+                      {feedback.non_verbal_cues.map((c, i) => (
+                        <li key={i} className="text-xs text-slate-300 flex items-start gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-sky-400 mt-1.5 flex-shrink-0" />
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
             {/* Sub-scores grid */}
             <div className="grid gap-6 md:grid-cols-2">
               {/* Bar chart card */}
@@ -355,7 +458,7 @@ export function FeedbackReport() {
               >
                 <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-indigo-400" />
-                  Assessment Dimensions
+                  Core Competency Breakdown
                 </h2>
                 <div className="grid gap-4">
                   <ScoreBar label="Analytical & Critical Depth" score={analytical} delay={0.1} />
@@ -373,13 +476,13 @@ export function FeedbackReport() {
                 className="glass-panel rounded-3xl p-6 border border-white/10 flex flex-col justify-between"
               >
                 <h2 className="text-base font-bold text-white mb-2">
-                  Competency Radar Profile
+                  6-Dimensional Radar Profile
                 </h2>
                 <div className="w-full h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={radarData}>
                       <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                      <PolarAngleAxis dataKey="axis" stroke="#94a3b8" tick={{ fill: '#cbd5e1', fontSize: 11 }} />
+                      <PolarAngleAxis dataKey="axis" stroke="#94a3b8" tick={{ fill: '#cbd5e1', fontSize: 10 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 10]} stroke="rgba(255,255,255,0.15)" />
                       <Radar
                         name="Competency"
@@ -557,7 +660,7 @@ export function FeedbackReport() {
       </div>
 
       <footer className="mt-auto px-4 py-6 text-center text-xs text-slate-500 border-t border-white/5">
-        Competitive Exams AI Voice Interview Simulator · Powered by Google Gemini Live API
+        Competitive Exams AI Voice & Video Interview Simulator · Powered by Google Gemini Live API
       </footer>
     </main>
   );
