@@ -117,7 +117,9 @@ export class GeminiLiveClient {
     const setupMessage = {
       setup: {
         model: DEFAULT_MODEL,
-        generation_config: buildGenerationConfig(),
+        generation_config: buildGenerationConfig(
+          this.config.examCategory ?? this.config.role,
+        ),
         system_instruction: {
           parts: [{ text: systemInstruction }],
         },

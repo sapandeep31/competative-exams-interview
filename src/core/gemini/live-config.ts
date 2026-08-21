@@ -1,16 +1,15 @@
 import type { CandidateBackground, ExamCategory, SimulationMode } from '@/core/state/types';
 
-/**
- * Default voice config — Aoede is a poised, articulate and authoritative voice.
- */
-export const DEFAULT_VOICE_NAME = 'Aoede';
-
 /** Model used for the Live API session. */
 export const DEFAULT_MODEL = 'models/gemini-3.1-flash-live-preview';
+
+export type PrebuiltVoice = 'Aoede' | 'Charon' | 'Fenrir' | 'Kore' | 'Orus' | 'Puck';
 
 export interface BoardOfficerProfile {
   name: string;
   designation: string;
+  gender: 'male' | 'female';
+  voiceName: PrebuiltVoice;
   serviceLore: string;
   disposition: string;
   guidance: string;
@@ -20,6 +19,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
   'UPSC Civil Services (IAS/IPS)': {
     name: 'Dr. Arvind K. Raghavan, IAS (Retd.)',
     designation: 'Former Union Home Secretary & Honorable Chairman of the UPSC Interview Board',
+    gender: 'male',
+    voiceName: 'Charon', // Deep, calm, dignified, senior intellectual male voice
     serviceLore: '38 years in the Indian Administrative Service across border districts, economic ministries, and Cabinet Secretariat. Recipient of National Public Administration honors.',
     disposition: 'Calm, deeply intellectual, polite yet relentless. Instantly spots coached or superficial answers. Demands constitutional backbone, administrative balance, and intellectual honesty.',
     guidance: `
@@ -34,6 +35,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
   'SSB Defence Interview (Army/Navy/Air Force)': {
     name: 'Brigadier Ranvijay Singh Rathore, SM',
     designation: 'Senior Military Interviewing Officer (IO), Services Selection Board',
+    gender: 'male',
+    voiceName: 'Orus', // Firm, commanding, authoritative military male voice
     serviceLore: '32 years of active service in the Infantry and Para Special Forces. Veteran of Siachen Glacier and high-intensity counter-terrorism operations.',
     disposition: 'Direct, commanding, highly observant, stern, and fiercely patriotic. Evaluates whether the candidate has the moral courage, physical endurance, and 15 Officer Like Qualities (OLQs) to lead troops under enemy fire.',
     guidance: `
@@ -48,6 +51,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
   'RBI Grade B & Banking PO': {
     name: 'Dr. Meenakshi Sundaram',
     designation: 'Deputy Governor & Senior Economic Policy Director, Reserve Bank of India',
+    gender: 'female',
+    voiceName: 'Aoede', // Sharp, articulate, poised, professional female economist voice
     serviceLore: 'PhD in Macroeconomics from Delhi School of Economics / LSE. Former Chief Economist at multilateral institutions, key architect of India’s inflation-targeting and systemic liquidity stabilization frameworks.',
     disposition: 'Highly quantitative, analytical, commercially astute, and impatient with vague jargon. Tests financial grounding, systemic risk intuition, and regulatory crisis handling.',
     guidance: `
@@ -61,6 +66,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
   'CAT & IIMs MBA PI': {
     name: 'Prof. Debashis Roy',
     designation: 'Professor of Strategy & Chair of Admissions, IIM Ahmedabad',
+    gender: 'male',
+    voiceName: 'Fenrir', // Incisive, intellectual, crisp academic male voice
     serviceLore: 'Doctorate in Strategic Management, corporate advisor to Fortune 500 multinationals, author of seminal case studies on competitive strategy and market disruption.',
     disposition: 'Rigorous, skeptical, business-minded, completely intolerant of generic motivation lines like "I want to be a business leader."',
     guidance: `
@@ -74,6 +81,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
   'State PSC (Civil Services)': {
     name: 'Shri Birendra Nath Shukla',
     designation: 'Former Additional Chief Secretary & Chairman, State Public Service Commission',
+    gender: 'male',
+    voiceName: 'Charon', // Seasoned, steady, experienced senior administrator male voice
     serviceLore: '34 years managing grassroots district administration, rural agrarian crises, Panchayati Raj decentralization, land reforms, and state revenue budgets.',
     disposition: 'Seasoned, culturally grounded, deeply observant of public service empathy and district-level law & order realities.',
     guidance: `
@@ -86,6 +95,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
   'Judiciary Services (PCS-J)': {
     name: 'Hon\'ble Justice (Retd.) Surendra Mohan Pathak',
     designation: 'Former High Court Senior Judge & Chairman of Judicial Examination Bench',
+    gender: 'male',
+    voiceName: 'Orus', // Solemn, commanding, measured judicial male voice
     serviceLore: '36 years on the bench authoring landmark rulings on constitutional liberties, procedural codes, and criminal jurisprudence.',
     disposition: 'Solemn, legally unyielding, analyzing constitutional morality, statutory precision (BNS/BNSS/CPC), and judicial temperament.',
     guidance: `
@@ -96,6 +107,8 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
 `,
   },
 };
+
+export const DEFAULT_VOICE_NAME: PrebuiltVoice = 'Charon';
 
 /**
  * Build a tailored system instruction for the candidate's competitive exam interview.
@@ -176,13 +189,16 @@ export function buildSystemInstruction(
   ].join('\n');
 }
 
-export function buildGenerationConfig() {
+export function buildGenerationConfig(examCategory?: ExamCategory) {
+  const officer = examCategory ? BOARD_OFFICERS[examCategory] : undefined;
+  const voiceName = officer?.voiceName || DEFAULT_VOICE_NAME;
+
   return {
     response_modalities: ['AUDIO'],
     speech_config: {
       voice_config: {
         prebuilt_voice_config: {
-          voice_name: DEFAULT_VOICE_NAME,
+          voice_name: voiceName,
         },
       },
     },
