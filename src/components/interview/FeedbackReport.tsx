@@ -164,6 +164,7 @@ function buildMarkdown(
   feedback: Feedback,
   meta: { name: string; exam: string; mode: string; date: string; duration: string },
   transcript: { role: 'user' | 'interviewer'; text: string; timestamp: number }[],
+  isVideoMode: boolean,
 ): string {
   const lines: string[] = [];
   lines.push(`# Competitive Exams Interview Evaluation Dossier`);
@@ -183,14 +184,18 @@ function buildMarkdown(
   lines.push(`- Domain & Current Affairs Mastery: ${(feedback.domain_knowledge ?? feedback.technical_depth ?? 0).toFixed(1)} / 10`);
   lines.push(`- Articulation & Composure: ${(feedback.articulation_composure ?? feedback.communication_clarity ?? 0).toFixed(1)} / 10`);
   lines.push(`- Speech Fluency & Vocal Pacing: ${(feedback.speech_fluency ?? 7).toFixed(1)} / 10`);
-  lines.push(`- Non-Verbal & Body Language Poise: ${(feedback.body_language_poise ?? 7).toFixed(1)} / 10`);
+  if (isVideoMode) {
+    lines.push(`- Non-Verbal & Body Language Poise: ${(feedback.body_language_poise ?? 7).toFixed(1)} / 10`);
+  } else {
+    lines.push(`- Non-Verbal & Body Language Poise: N/A (Voice-Only Session)`);
+  }
   lines.push('');
   if (feedback.vocal_cues && feedback.vocal_cues.length > 0) {
     lines.push(`## Observed Vocal & Speech Cues`);
     for (const v of feedback.vocal_cues) lines.push(`- ${v}`);
     lines.push('');
   }
-  if (feedback.non_verbal_cues && feedback.non_verbal_cues.length > 0) {
+  if (isVideoMode && feedback.non_verbal_cues && feedback.non_verbal_cues.length > 0) {
     lines.push(`## Observed Non-Verbal & Body Language Cues`);
     for (const nv of feedback.non_verbal_cues) lines.push(`- ${nv}`);
     lines.push('');
@@ -249,6 +254,14 @@ export function FeedbackReport() {
     );
   }
 
+  const isVideoMode =
+    config?.inputMode === 'video_audio' &&
+    (feedback.body_language_poise ?? 0) > 0 &&
+    !(
+      feedback.non_verbal_cues?.[0]?.toLowerCase().includes('n/a') ||
+      feedback.non_verbal_cues?.[0]?.toLowerCase().includes('voice only')
+    );
+
   const analytical = feedback.analytical_depth ?? feedback.problem_solving ?? 6;
   const adminBalance = feedback.administrative_balance ?? 6;
   const domain = feedback.domain_knowledge ?? feedback.technical_depth ?? 6;
@@ -261,15 +274,15 @@ export function FeedbackReport() {
 
   const radarData = [
     { axis: 'Analytical Depth', value: analytical, max: 10 },
-    { axis: 'Admin Balance / OLQs', value: adminBalance, max: 10 },
-    { axis: 'Domain Knowledge', value: domain, max: 10 },
+    { axis: 'Admin Balance', value: adminBalance, max: 10 },
+    { axis: 'Domain Mastery', value: domain, max: 10 },
     { axis: 'Articulation', value: articulation, max: 10 },
     { axis: 'Speech Fluency', value: speechFluency, max: 10 },
-    { axis: 'Body Language', value: bodyLanguage, max: 10 },
+    ...(isVideoMode ? [{ axis: 'Body Language', value: bodyLanguage, max: 10 }] : []),
   ];
 
   const handleCopyMarkdown = async () => {
-    const md = buildMarkdown(feedback, meta, transcript);
+    const md = buildMarkdown(feedback, meta, transcript, isVideoMode);
     try {
       await navigator.clipboard.writeText(md);
       setCopied(true);
@@ -420,7 +433,7 @@ export function FeedbackReport() {
               variant="outline"
               className="text-[10px] font-mono text-indigo-400 border-indigo-500/20 bg-indigo-500/10"
             >
-              Live Biometrics
+              Live Telemetry
             </Badge>
           </div>
 
@@ -447,14 +460,30 @@ export function FeedbackReport() {
                   <Eye className="h-3.5 w-3.5 text-sky-400" />
                   Body Language & Visual Poise
                 </span>
-                <span className="text-xs font-mono font-bold text-sky-400">
-                  {bodyLanguage.toFixed(1)} / 10
-                </span>
+                {isVideoMode ? (
+                  <span className="text-xs font-mono font-bold text-sky-400">
+                    {bodyLanguage.toFixed(1)} / 10
+                  </span>
+                ) : (
+                  <Badge variant="outline" className="border-zinc-800 bg-zinc-900 text-zinc-400 text-[10px] font-mono py-0 px-1.5">
+                    N/A (Voice Only)
+                  </Badge>
+                )}
               </div>
-              <ScoreBar label="" score={bodyLanguage} delay={0.2} />
-              <p className="text-[11px] text-zinc-400 leading-normal">
-                Evaluates physical posture, eye contact consistency, and composure under questioning.
-              </p>
+              {isVideoMode ? (
+                <>
+                  <ScoreBar label="" score={bodyLanguage} delay={0.2} />
+                  <p className="text-[11px] text-zinc-400 leading-normal">
+                    Evaluates physical posture, eye contact consistency, and composure under questioning.
+                  </p>
+                </>
+              ) : (
+                <div className="py-1">
+                  <p className="text-[11px] text-zinc-500 leading-normal">
+                    Camera feed was disabled during this voice session. Non-verbal visual telemetry is enabled when taking the interview in Video mode.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -477,7 +506,7 @@ export function FeedbackReport() {
               </div>
             )}
 
-            {feedback.non_verbal_cues && feedback.non_verbal_cues.length > 0 && (
+            {isVideoMode && feedback.non_verbal_cues && feedback.non_verbal_cues.length > 0 && (
               <div className="p-3 rounded-md bg-zinc-950/60 border border-zinc-800/80">
                 <span className="text-[11px] font-semibold text-zinc-300 flex items-center gap-1.5 mb-2">
                   <Camera className="h-3 w-3 text-sky-400" />
@@ -514,7 +543,7 @@ export function FeedbackReport() {
           {/* Right: Radar Chart */}
           <div className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40 flex flex-col justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-200 pb-2 border-b border-zinc-800/80">
-              6-Dimensional Radar Profile
+              Competency Radar Profile
             </h2>
             <div className="w-full h-48 my-auto">
               <ResponsiveContainer width="100%" height="100%">

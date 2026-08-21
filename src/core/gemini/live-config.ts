@@ -118,6 +118,7 @@ export function buildSystemInstruction(
   examCategory: ExamCategory,
   simulationMode: SimulationMode,
   background?: CandidateBackground,
+  inputMode?: 'audio' | 'video_audio',
 ): string {
   const officer = BOARD_OFFICERS[examCategory] || BOARD_OFFICERS['UPSC Civil Services (IAS/IPS)'];
 
@@ -145,6 +146,19 @@ export function buildSystemInstruction(
       .join('\n')
     : 'No detailed background provided.';
 
+  const isVideo = inputMode === 'video_audio';
+
+  const visualProtocol = isVideo
+    ? `4. MONITOR VISUAL & NON-VERBAL DELIVERY (WEBCAM ACTIVE):
+   - A live 1 FPS camera video feed is active. Observe posture (upright vs slouching), eye contact (looking directly at board vs looking away/down under stress), facial tension, and hand gestures/fidgeting.
+   - Factor these non-verbal cues directly into your questions (e.g. "You look hesitant, candidate. Take a moment and speak with conviction.").
+   - When calling end_interview_and_generate_feedback, provide 2-4 real non_verbal_cues and score body_language_poise (0 to 10).`
+    : `4. SESSION MODALITY (VOICE ONLY - NO CAMERA):
+   - The candidate is in VOICE-ONLY mode (no camera stream is active).
+   - Do NOT fabricate or evaluate physical eye contact, hand gestures, or visual posture.
+   - Focus exclusively on vocal cadence, spoken arguments, stammering, and verbal fluency.
+   - When calling end_interview_and_generate_feedback, set non_verbal_cues to ["N/A - Voice only session (camera disabled)"] and set body_language_poise to 0.`;
+
   return [
     `YOU ARE: ${officer.name}`,
     `DESIGNATION: ${officer.designation}`,
@@ -154,6 +168,7 @@ export function buildSystemInstruction(
     `CANDIDATE NAME: ${candidateName}`,
     `EXAM BOARD: ${examCategory}`,
     `SIMULATION MODE: ${simulationMode}`,
+    `SESSION MODALITY: ${isVideo ? 'Live Video + Voice Stream' : 'Voice Only Audio Stream'}`,
     ``,
     `CANDIDATE DAF & BACKGROUND:`,
     bgInfo,
@@ -170,9 +185,7 @@ export function buildSystemInstruction(
     `3. MONITOR AUDIO DELIVERY & VOCAL CUES:`,
     `   - Actively notice stammering, faltering, excessive pauses, voice trembling, and filler words ("um", "uh", "you know").`,
     `   - If they stammer or lose composure under a difficult question, notice it and follow up to see if they regain poise or get more flustered.`,
-    `4. MONITOR VISUAL & NON-VERBAL DELIVERY (IF WEBCAM ACTIVE):`,
-    `   - Observe posture (upright vs slouching), eye contact (looking directly at board vs looking away/down under stress), facial tension, and hand gestures/fidgeting.`,
-    `   - Factor these non-verbal cues directly into your questions (e.g. "You look hesitant, candidate. Take a moment and speak with conviction.").`,
+    visualProtocol,
     `5. PUSH BACK ON SURFACE-LEVEL & REHEARSED ANSWERS:`,
     `   - If they give a generic/textbook answer, challenge them: "That sounds like a prepared coaching response. What is your actual grounded reasoning?"`,
     `   - If they waffle or show hesitation, call it out: "You sound unsure. Take a breath and tell me your definitive stand."`,
@@ -191,7 +204,7 @@ export function buildSystemInstruction(
     `   - NO markdown, bullet points, asterisks, numbering, or special characters. Conversational spoken sentences only.`,
     `   - Keep turns concise (2-3 crisp sentences).`,
     `10. CONCLUDING & FEEDBACK:`,
-    `   - After 8-12 substantive exchanges (or upon manual wrap-up), formally conclude and call end_interview_and_generate_feedback. Include detailed observations of their vocal fluency (stammering/hesitation) and non-verbal posture/eye contact in the scorecard parameters.`,
+    `   - After 8-12 substantive exchanges (or upon manual wrap-up), formally conclude and call end_interview_and_generate_feedback. Include detailed observations of their vocal fluency (stammering/hesitation) and non-verbal cues according to session modality in the scorecard parameters.`,
   ].join('\n');
 }
 

@@ -112,6 +112,7 @@ export class GeminiLiveClient {
       this.config.examCategory ?? this.config.role,
       this.config.simulationMode ?? this.config.level,
       this.config.background,
+      this.config.inputMode,
     );
 
     const setupMessage = {

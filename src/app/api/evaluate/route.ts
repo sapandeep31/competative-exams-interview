@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     const candidateName = config?.candidateName || 'Candidate';
     const examCategory = config?.examCategory || config?.role || 'UPSC Civil Services (IAS/IPS)';
     const simulationMode = config?.simulationMode || config?.level || 'Comprehensive Board Mock';
+    const inputMode = config?.inputMode || 'audio';
+    const isVideoMode = inputMode === 'video_audio';
     const bg = config?.background;
 
     const bgStr = bg
@@ -44,14 +46,22 @@ export async function POST(req: NextRequest) {
             .join('\n\n')
         : 'No spoken transcript was captured during this session.';
 
+    const visualInstructions = isVideoMode
+      ? `- body_language_poise (number between 0 and 10, evaluating projected confidence, posture, eye contact consistency, and non-verbal composure under pressure)
+- non_verbal_cues (array of 2-4 strings observing non-verbal physical behavior, eye contact consistency, and posture under stress, e.g. "Maintained upright posture and steady gaze", "Looked down when challenged on budget statistics")`
+      : `- body_language_poise (MUST BE 0, because this was a voice-only interview with camera disabled)
+- non_verbal_cues (MUST BE an array with EXACTLY ONE element: ["N/A - Voice only session (camera disabled)"])`;
+
     const systemPrompt = `You are a Senior Board Assessor & Chief Interview Evaluator for ${examCategory}.
 Candidate: ${candidateName}
 Exam: ${examCategory}
 Mode: ${simulationMode}
+Session Modality: ${isVideoMode ? 'Live Video + Voice' : 'Voice Only (Camera Disabled)'}
 ${bgStr}
 
 Evaluate the candidate's interview rigorously and objectively according to the standard assessment criteria of ${examCategory} (e.g. UPSC Personality Test / SSB OLQ Dimensions / RBI Macroeconomic Acumen / IIM PI Standards / Judicial Temperament).
-Also evaluate their verbal delivery (hesitation, stammering, filler words, coherence) and projected non-verbal poise.
+Evaluate their verbal delivery (hesitation, stammering, filler words, coherence, articulation).
+${isVideoMode ? 'Evaluate observed physical non-verbal composure from the live camera stream.' : 'Do NOT hallucinate visual eye contact or posture since this was a voice-only session without camera.'}
 
 Return a structured JSON object with EXACTLY the following fields:
 - overall_score (integer between 0 and 100, reflecting competitive merit rank standard)
@@ -61,9 +71,8 @@ Return a structured JSON object with EXACTLY the following fields:
 - domain_knowledge (number between 0 and 10, evaluating current affairs, constitutional/economic/defence/subject mastery)
 - articulation_composure (number between 0 and 10, evaluating clarity of expression, calmness, and poise under stress)
 - speech_fluency (number between 0 and 10, evaluating speech fluency, lack of stammering/faltering, and clean delivery)
-- body_language_poise (number between 0 and 10, evaluating projected confidence, posture, and non-verbal composure under pressure)
+${visualInstructions}
 - vocal_cues (array of 2-4 strings observing speech delivery, e.g. "Noticeable stammering during high-pressure question", "Clear confident cadence", "Excessive filler sounds")
-- non_verbal_cues (array of 2-4 strings observing non-verbal behavior, e.g. "Maintained steady poise", "Hesitation pauses before answering crisis scenario", "Direct and respectful tone")
 - key_strengths (array of 3-5 specific, concrete strengths shown in the interview)
 - areas_for_improvement (array of 3-5 specific, actionable suggestions for candidate growth)
 - detailed_summary (2-3 paragraph objective performance appraisal prose, explaining board rationale, notable answers, delivery cues, and areas to polish without markdown bullets)`;
@@ -105,6 +114,10 @@ Return a structured JSON object with EXACTLY the following fields:
     }
 
     const parsedJson = JSON.parse(candidateText) as Record<string, unknown>;
+    if (!isVideoMode) {
+      parsedJson.body_language_poise = 0;
+      parsedJson.non_verbal_cues = ['N/A - Voice only session (camera disabled)'];
+    }
     const validatedFeedback: Feedback = handleEndInterviewToolCall(parsedJson);
 
     return NextResponse.json({ feedback: validatedFeedback });
