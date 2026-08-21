@@ -184,8 +184,16 @@ export function LiveSessionView() {
     [endInterview],
   );
 
+  // Interruption and silence tracking
+  const isInterruptedRef = useRef<boolean>(false);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // --- Teardown engine ---
   const teardown = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
     if (videoIntervalRef.current) {
       clearInterval(videoIntervalRef.current);
       videoIntervalRef.current = null;
@@ -205,6 +213,7 @@ export function LiveSessionView() {
   const connect = useCallback(async () => {
     if (!config) return;
     endedRef.current = false;
+    isInterruptedRef.current = false;
     setConnectionState('connecting');
     setAudioState('idle');
 
@@ -240,7 +249,10 @@ export function LiveSessionView() {
       sampleRate: 24000,
       onLevel: (rms) => setAiLevel(rms),
       onPlaybackEnd: () => {
-        setAudioState('thinking');
+        // When AI stops speaking, the board is actively listening for candidate's answer
+        if (!isInterruptedRef.current) {
+          setAudioState('listening');
+        }
       },
     });
     playerRef.current = player;
@@ -251,16 +263,31 @@ export function LiveSessionView() {
       onChunk: (b64) => {
         clientRef.current?.sendAudio(b64);
         const rms = recorder.getRMS();
-        if (
-          rms > BARGE_IN_RMS_THRESHOLD &&
-          playerRef.current?.isPlaying() === true
-        ) {
-          playerRef.current.stopAndClear();
-          clientRef.current?.sendInterrupt();
+
+        // Local instant barge-in if candidate speaks while AI is talking
+        if (rms > BARGE_IN_RMS_THRESHOLD) {
+          if (playerRef.current?.isPlaying() === true) {
+            isInterruptedRef.current = true;
+            playerRef.current.stopAndClear();
+          }
+          if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+            silenceTimeoutRef.current = null;
+          }
           setAudioState('listening');
         }
       },
-      onLevel: (rms) => setMicLevel(rms),
+      onLevel: (rms) => {
+        setMicLevel(rms);
+        if (rms < 0.015 && !playerRef.current?.isPlaying()) {
+          if (!silenceTimeoutRef.current) {
+            silenceTimeoutRef.current = setTimeout(() => {
+              setAudioState('thinking');
+              silenceTimeoutRef.current = null;
+            }, 1000);
+          }
+        }
+      },
     });
 
     try {
@@ -325,6 +352,12 @@ export function LiveSessionView() {
     });
 
     client.on('audio', (b64) => {
+      // Discard trailing packets from an interrupted turn
+      if (isInterruptedRef.current) return;
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
       playerRef.current?.enqueueChunk(b64);
       setAudioState('speaking');
     });
@@ -336,12 +369,23 @@ export function LiveSessionView() {
     });
 
     client.on('outputTranscript', (text) => {
+      // New output turn started from the board, clear interrupted state
+      isInterruptedRef.current = false;
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
       outputBufferRef.current += ' ' + text;
       flushOutputBuffer(false);
       setAudioState('speaking');
     });
 
     client.on('interrupted', () => {
+      isInterruptedRef.current = true;
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
       playerRef.current?.stopAndClear();
       setAudioState('listening');
     });

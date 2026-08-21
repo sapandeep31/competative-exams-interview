@@ -224,12 +224,8 @@ export class GeminiLiveClient {
 
   /** Signal a barge-in (user started speaking while AI was talking). */
   sendInterrupt(): void {
-    if (!this.setupAcknowledged || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return;
-    }
-    this.sendRaw({
-      realtime_input: { interrupt: true },
-    });
+    // Gemini Live detects interruption organically from PCM audio chunks.
+    this.emit('interrupted');
   }
 
   private sendRaw(obj: unknown): void {

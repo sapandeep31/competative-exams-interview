@@ -110,12 +110,12 @@ export class AudioPlayer {
     this.onLevel?.(rms);
   }
 
-  /** Stop everything immediately (barge-in). */
+  /** Stop everything immediately (barge-in / interruption). */
   stopAndClear(): void {
     for (const s of this.scheduledSources) {
       try {
         s.onended = null;
-        s.stop();
+        s.stop(0);
       } catch {
         /* already stopped */
       }
