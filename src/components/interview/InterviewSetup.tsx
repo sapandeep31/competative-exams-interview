@@ -394,7 +394,7 @@ export function InterviewSetup() {
           </div>
           <span className="text-zinc-600 hidden sm:inline">/</span>
           <span className="text-xs text-zinc-400 font-mono hidden sm:inline">
-            v0.2.1-live
+            v0.3.0-live
           </span>
         </div>
 
