@@ -708,7 +708,14 @@ export function LiveSessionView() {
                   className="absolute bottom-2 right-2 z-30 w-44 sm:w-52 aspect-video rounded-md overflow-hidden border border-zinc-700 bg-zinc-950/95 shadow-xl cursor-grab active:cursor-grabbing backdrop-blur-md select-none group"
                 >
                   <video
-                    ref={videoElementRef}
+                    ref={(el) => {
+                      videoElementRef.current = el;
+                      if (el && videoStreamRef.current && el.srcObject !== videoStreamRef.current) {
+                        el.srcObject = videoStreamRef.current;
+                        el.play().catch(() => {});
+                      }
+                    }}
+                    autoPlay
                     playsInline
                     muted
                     className="w-full h-full object-cover -scale-x-100 pointer-events-none"
@@ -859,9 +866,6 @@ export function LiveSessionView() {
           </p>
         </div>
       )}
-
-      {/* Offscreen hidden video capture element */}
-      <video ref={videoElementRef} className="hidden" playsInline muted />
     </main>
   );
 }
