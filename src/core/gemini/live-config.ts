@@ -1,4 +1,4 @@
-import type { CandidateBackground, ExamCategory, SimulationMode } from '@/core/state/types';
+import type { CandidateBackground, ExamCategory, InputMode, SimulationMode } from '@/core/state/types';
 
 /** Model used for the Live API session. */
 export const DEFAULT_MODEL = 'models/gemini-3.1-flash-live-preview';
@@ -118,7 +118,7 @@ export function buildSystemInstruction(
   examCategory: ExamCategory,
   simulationMode: SimulationMode,
   background?: CandidateBackground,
-  inputMode?: 'audio' | 'video_audio',
+  inputMode?: InputMode | 'audio',
 ): string {
   const officer = BOARD_OFFICERS[examCategory] || BOARD_OFFICERS['UPSC Civil Services (IAS/IPS)'];
 

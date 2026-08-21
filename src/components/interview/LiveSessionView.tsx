@@ -564,7 +564,7 @@ export function LiveSessionView() {
           className="bg-zinc-900 border border-zinc-800 text-zinc-300 gap-1 font-mono text-[11px] px-2 py-0.5"
         >
           <ShieldCheck className="h-3 w-3 text-indigo-400" />
-          {officer?.exam || exam.toUpperCase()}
+          {config.candidateName}
         </Badge>
         {officer && (
           <Badge
