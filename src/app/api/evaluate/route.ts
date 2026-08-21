@@ -62,6 +62,7 @@ ${bgStr}
 Evaluate the candidate's interview rigorously and objectively according to the standard assessment criteria of ${examCategory} (e.g. UPSC Personality Test / SSB OLQ Dimensions / RBI Macroeconomic Acumen / IIM PI Standards / Judicial Temperament).
 Evaluate their verbal delivery (hesitation, stammering, filler words, coherence, articulation).
 ${isVideoMode ? 'Evaluate observed physical non-verbal composure from the live camera stream.' : 'Do NOT hallucinate visual eye contact or posture since this was a voice-only session without camera.'}
+If the transcript is brief or the session was ended early, evaluate whatever interaction occurred constructively, noting that the interview was concluded early in the detailed summary.
 
 Return a structured JSON object with EXACTLY the following fields:
 - overall_score (integer between 0 and 100, reflecting competitive merit rank standard)

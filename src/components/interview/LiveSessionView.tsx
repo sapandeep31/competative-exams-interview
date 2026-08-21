@@ -472,9 +472,6 @@ export function LiveSessionView() {
   const requestStandardEvaluation = useCallback(async () => {
     if (!config) return;
     setIsEvaluating(true);
-    flushInputBuffer(true);
-    flushOutputBuffer(true);
-
     const currentTranscript = useInterviewStore.getState().transcript;
     teardown();
 
