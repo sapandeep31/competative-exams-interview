@@ -33,7 +33,7 @@ export const BOARD_OFFICERS: Record<ExamCategory, BoardOfficerProfile> = {
 `,
   },
   'SSB Defence Interview (Army/Navy/Air Force)': {
-    name: 'Brigadier Ranvijay Singh Rathore, SM',
+    name: 'Brigadier Ranvijay Singh Rathore',
     designation: 'Senior Military Interviewing Officer (IO), Services Selection Board',
     gender: 'male',
     voiceName: 'Orus', // Firm, commanding, authoritative military male voice
@@ -134,15 +134,15 @@ export function buildSystemInstruction(
 
   const bgInfo = background
     ? [
-        background.education ? `Educational Background: ${background.education}` : '',
-        background.nativeState ? `Native State / Region: ${background.nativeState}` : '',
-        background.optionalOrSpecialization
-          ? `Optional Subject / Specialization: ${background.optionalOrSpecialization}`
-          : '',
-        background.hobbies ? `Hobbies / Extra-curriculars: ${background.hobbies}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n')
+      background.education ? `Educational Background: ${background.education}` : '',
+      background.nativeState ? `Native State / Region: ${background.nativeState}` : '',
+      background.optionalOrSpecialization
+        ? `Optional Subject / Specialization: ${background.optionalOrSpecialization}`
+        : '',
+      background.hobbies ? `Hobbies / Extra-curriculars: ${background.hobbies}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
     : 'No detailed background provided.';
 
   return [
