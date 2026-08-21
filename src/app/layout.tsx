@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Competitive Exams AI Interview Simulator — UPSC, SSB, RBI & IIMs",
   description:
-    "Simulate authentic board interviews for UPSC Civil Services, SSB Defence, RBI Grade B, IIMs MBA PI, and State PSC with real-time Gemini voice AI and OLQ/administrative radar scorecards.",
+    "Simulate authentic board interviews for UPSC Civil Services, SSB Defence, RBI Grade B, IIMs MBA PI, and State PSC with real-time voice assessment and comprehensive competency scorecards.",
   keywords: [
     "UPSC Interview Prep",
     "SSB Interview Practice",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "IIM Personal Interview",
     "State PSC Interview",
     "AI Mock Interview",
-    "Gemini Live AI",
+    "Voice Interview Simulator",
   ],
   authors: [{ name: "Competitive Exams AI Board" }],
 };

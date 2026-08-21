@@ -249,7 +249,7 @@ export function LiveSessionView() {
         };
         throw new Error(
           data.error ??
-            'No Gemini API key. Set GEMINI_API_KEY in .env.local or provide one on the setup screen.',
+            'No API key configured. Please set the API key on the setup screen.',
         );
       }
       const data = (await res.json()) as { apiKey: string };
@@ -631,7 +631,7 @@ export function LiveSessionView() {
         {config.inputMode === 'video_audio' && (
           <Badge className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] gap-1 py-0 px-1.5">
             <Camera className="h-2.5 w-2.5" />
-            Vision
+            Video
           </Badge>
         )}
       </div>
@@ -752,7 +752,7 @@ export function LiveSessionView() {
                   />
                   <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[9px] text-emerald-300 font-mono flex items-center gap-1 border border-white/10 select-none pointer-events-none">
                     <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
-                    1 FPS Vision
+                    Live Video
                   </div>
                   <div className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded bg-black/80 text-[9px] text-zinc-400 font-mono flex items-center gap-0.5 border border-white/10 opacity-60 group-hover:opacity-100 transition-opacity select-none pointer-events-none">
                     <Move className="h-2 w-2" />

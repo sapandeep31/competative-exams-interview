@@ -282,7 +282,7 @@ export function InterviewSetup() {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         const msg =
           data.error ??
-          'No Gemini API key available. Set GEMINI_API_KEY in .env.local or provide one below.';
+          'No API key configured. Please check server configuration or provide a key below.';
         toast.error('Missing API key', { description: msg });
         setError(msg);
         setStarting(false);
@@ -344,15 +344,8 @@ export function InterviewSetup() {
             variant="outline"
             className="text-[11px] font-mono border-zinc-800 bg-zinc-900/80 text-zinc-300 gap-1.5 px-2 py-0.5"
           >
-            <Cpu className="h-3 w-3 text-indigo-400" />
-            Gemini 2.0 Flash Live
-          </Badge>
-          <Badge
-            variant="outline"
-            className="text-[11px] font-mono border-zinc-800 bg-zinc-900/80 text-zinc-300 gap-1.5 px-2 py-0.5 hidden md:inline-flex"
-          >
-            <Radio className="h-3 w-3 text-emerald-400" />
-            Bidirectional Audio & Vision
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Official Board Session
           </Badge>
         </div>
       </header>
@@ -517,11 +510,11 @@ export function InterviewSetup() {
                     </span>
                   </div>
                   <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 text-[10px] py-0 px-1.5">
-                    AI Vision
+                    Live Video
                   </Badge>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-normal">
-                  Streams frames at 1 FPS. Evaluates physical posture, eye contact consistency, and composure.
+                  Enables camera stream to evaluate physical posture, eye contact consistency, and composure.
                 </p>
               </button>
             </div>
@@ -532,7 +525,7 @@ export function InterviewSetup() {
                 <div className="flex items-center justify-between mb-2.5">
                   <span className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                     <Camera className="h-3.5 w-3.5 text-emerald-400" />
-                    Webcam Framing Check (1 FPS Vision Sampling)
+                    Webcam Framing Check
                   </span>
                   <Button
                     type="button"
@@ -574,7 +567,7 @@ export function InterviewSetup() {
                   {cameraActive && (
                     <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 border border-white/10 text-[9px] font-mono text-emerald-300 flex items-center gap-1">
                       <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
-                      1 FPS SAMPLING ACTIVE
+                      CAMERA PREVIEW ACTIVE
                     </div>
                   )}
                 </div>
@@ -806,7 +799,7 @@ export function InterviewSetup() {
                   <KeyRound className="h-4 w-4 text-zinc-400" />
                   <div>
                     <div className="text-xs font-semibold text-zinc-200">
-                      Custom Gemini API Key Override
+                      Custom API Key Configuration
                     </div>
                     <div className="text-[11px] text-zinc-400 font-normal">
                       Leave empty to use default server configuration.
@@ -819,7 +812,7 @@ export function InterviewSetup() {
                   <Input
                     id="apikey"
                     type={showKey ? 'text' : 'password'}
-                    placeholder="AIza… (leave empty to use server default key)"
+                    placeholder="Provide custom API key (optional)"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     autoComplete="off"
@@ -873,7 +866,7 @@ export function InterviewSetup() {
                 {name.trim() ? name.trim() : 'Candidate Name Pending'}
               </Badge>
               <Badge variant="outline" className="border-zinc-800 bg-zinc-900 text-zinc-300">
-                {inputMode === 'video_audio' ? 'Voice + 1 FPS Vision' : 'Voice Stream'}
+                {inputMode === 'video_audio' ? 'Voice & Video' : 'Voice Only'}
               </Badge>
             </div>
           </div>
@@ -901,7 +894,7 @@ export function InterviewSetup() {
             <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono flex-wrap gap-2">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500/80" />
-                <span>Encrypted real-time bidirectional WebSocket stream</span>
+                <span>Secure real-time audio & video stream</span>
               </div>
               {!name.trim() && (
                 <div className="flex items-center gap-1 text-amber-400/80">
