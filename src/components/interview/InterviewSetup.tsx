@@ -358,577 +358,560 @@ export function InterviewSetup() {
       </header>
 
       {/* Main Workspace Area */}
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
+      <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full space-y-6">
         {/* Workspace Title Header */}
-        <div className="mb-6 pb-5 border-b border-zinc-800/80">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
-                Interview Setup & Board Protocol
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-3xl">
-                Configure your candidate credentials, target exam panel, simulation mode, and telemetry streams before convening the official interview board.
+        <div className="pb-4 border-b border-zinc-800/80 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
+              Interview Setup & Board Protocol
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Configure your candidate credentials, target exam panel, simulation mode, and telemetry streams.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 bg-zinc-900/60 px-3 py-1.5 rounded-md border border-zinc-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            6 Specialized Boards Available
+          </div>
+        </div>
+
+        {/* Section 01: Candidate Identity & Input Devices */}
+        <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                01
+              </span>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Candidate Profile & Input Telemetry
+              </h2>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-500">
+              Required credentials
+            </span>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4 mb-5">
+            {/* Candidate Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs font-medium text-zinc-300 flex items-center justify-between">
+                <span>Candidate Full Name</span>
+                <span className="text-[10px] font-mono text-zinc-500">Required</span>
+              </Label>
+              <Input
+                id="name"
+                placeholder="e.g. Vikramaditya Singh"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="off"
+                className="h-9 text-sm"
+              />
+            </div>
+
+            {/* Mic Telemetry Check */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-zinc-300 flex items-center justify-between">
+                <span>Microphone Calibration</span>
+                <span className="text-[10px] font-mono text-zinc-500">
+                  {micState.active ? `${Math.round(micState.level * 100)}% RMS` : 'Idle'}
+                </span>
+              </Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={micState.active ? stopMeter : startMeter}
+                  className={cn(
+                    'h-9 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300',
+                    micState.active && 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20',
+                  )}
+                >
+                  {micState.active ? (
+                    <>
+                      <MicOff className="h-3.5 w-3.5 text-emerald-400" />
+                      Stop Test
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-3.5 w-3.5 text-zinc-400" />
+                      Test Mic
+                    </>
+                  )}
+                </Button>
+                <div className="flex-1 h-9 rounded-md bg-zinc-900/80 border border-zinc-800 p-1.5 flex items-center">
+                  <div className="w-full h-2 rounded bg-zinc-950 overflow-hidden relative border border-zinc-800/60">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded transition-[width] duration-75"
+                      style={{
+                        width: `${meterWidth}%`,
+                        background:
+                          meterWidth > 75
+                            ? '#ef4444'
+                            : meterWidth > 40
+                              ? '#10b981'
+                              : '#6366f1',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Modality Selector (Audio vs Audio+Video) */}
+          <div className="pt-4 border-t border-zinc-800/80">
+            <Label className="text-xs font-medium text-zinc-300 mb-2 block">
+              Interview Modality Stream
+            </Label>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {/* Voice Only */}
+              <button
+                type="button"
+                onClick={() => {
+                  setInputMode('audio_only');
+                  stopCameraPreview();
+                }}
+                className={cn(
+                  'p-3 rounded-md border text-left transition-all duration-150 active:scale-[0.99] cursor-pointer',
+                  inputMode === 'audio_only'
+                    ? 'border-zinc-300 bg-zinc-800/60 text-zinc-100'
+                    : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Mic className="h-4 w-4 text-zinc-300" />
+                    <span className="font-medium text-xs text-zinc-200">
+                      Voice Only (Microphone)
+                    </span>
+                  </div>
+                  {inputMode === 'audio_only' && (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-zinc-200" />
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-normal">
+                  Ultra-low-latency real-time voice streaming. Evaluates spoken depth, articulation, and domain knowledge.
+                </p>
+              </button>
+
+              {/* Video & Voice */}
+              <button
+                type="button"
+                onClick={() => {
+                  setInputMode('video_audio');
+                  if (!cameraActive) void startCameraPreview();
+                }}
+                className={cn(
+                  'p-3 rounded-md border text-left transition-all duration-150 active:scale-[0.99] cursor-pointer',
+                  inputMode === 'video_audio'
+                    ? 'border-emerald-500/60 bg-emerald-950/15 text-zinc-100'
+                    : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-4 w-4 text-emerald-400" />
+                    <span className="font-medium text-xs text-zinc-200">
+                      Video & Voice (Webcam + Mic)
+                    </span>
+                  </div>
+                  <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 text-[10px] py-0 px-1.5">
+                    AI Vision
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-normal">
+                  Streams frames at 1 FPS. Evaluates physical posture, eye contact consistency, and composure.
+                </p>
+              </button>
+            </div>
+
+            {/* Inline Camera Framing HUD (if video mode selected) */}
+            {inputMode === 'video_audio' && (
+              <div className="mt-4 p-3.5 rounded-md bg-zinc-950/70 border border-zinc-800/80">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <Camera className="h-3.5 w-3.5 text-emerald-400" />
+                    Webcam Framing Check (1 FPS Vision Sampling)
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={cameraActive ? stopCameraPreview : startCameraPreview}
+                    className="h-7 text-xs px-2.5 border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
+                  >
+                    {cameraActive ? (
+                      <>
+                        <VideoOff className="h-3 w-3 text-red-400 mr-1" />
+                        Turn Off Preview
+                      </>
+                    ) : (
+                      <>
+                        <Video className="h-3 w-3 text-emerald-400 mr-1" />
+                        Preview Camera
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <div className="relative aspect-video max-w-sm mx-auto bg-zinc-950 rounded border border-zinc-800 overflow-hidden flex items-center justify-center">
+                  <video
+                    ref={previewVideoRef}
+                    playsInline
+                    muted
+                    className={cn(
+                      'w-full h-full object-cover -scale-x-100',
+                      !cameraActive && 'hidden',
+                    )}
+                  />
+                  {!cameraActive && (
+                    <div className="text-center p-3 text-zinc-500 text-xs">
+                      <Camera className="h-6 w-6 mx-auto mb-1 text-zinc-600" />
+                      Click Preview to test video framing before the board convenes.
+                    </div>
+                  )}
+                  {cameraActive && (
+                    <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 border border-white/10 text-[9px] font-mono text-emerald-300 flex items-center gap-1">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                      1 FPS SAMPLING ACTIVE
+                    </div>
+                  )}
+                </div>
+                {cameraError && (
+                  <p className="text-xs text-amber-300 mt-2 p-2 rounded bg-amber-500/10 border border-amber-400/20">
+                    {cameraError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Section 02: Exam Board & Panel Track Selection */}
+        <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                02
+              </span>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Select Target Examination Board
+              </h2>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-500">
+              {EXAM_CARDS.length} Panels Configured
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {EXAM_CARDS.map((exam) => {
+              const Icon = exam.icon;
+              const isSelected = selectedExam === exam.id;
+              return (
+                <div
+                  key={exam.id}
+                  onClick={() => setSelectedExam(exam.id)}
+                  className={cn(
+                    'cursor-pointer rounded-md p-3.5 transition-all duration-150 border relative flex flex-col justify-between active:scale-[0.99]',
+                    isSelected
+                      ? 'border-zinc-300 bg-zinc-800/50 shadow-xs'
+                      : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/60',
+                  )}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-7 w-7 rounded bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-zinc-200">
+                        <Icon className="h-3.5 w-3.5" />
+                      </div>
+                      {isSelected && (
+                        <Badge className="bg-zinc-200 text-zinc-950 text-[10px] font-mono font-semibold px-1.5 py-0">
+                          ACTIVE
+                        </Badge>
+                      )}
+                    </div>
+
+                    <h3 className="font-semibold text-xs text-zinc-100 tracking-tight mb-0.5">
+                      {exam.title}
+                    </h3>
+                    <p className="text-[11px] text-zinc-400 mb-2 leading-relaxed line-clamp-1">
+                      {exam.shortDesc}
+                    </p>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-zinc-800/60 space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                      <span className="text-[11px] font-medium text-zinc-200 truncate">
+                        {exam.officerName}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 truncate">
+                      {exam.officerDesignation}
+                    </p>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {exam.focusTags.slice(0, 2).map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 border border-zinc-700/40"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 03: Simulation Protocol Mode */}
+        <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                03
+              </span>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Simulation Protocol & Grilling Strategy
+              </h2>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-500">
+              Select Intensity
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {MODES.map((mode) => {
+              const isSelected = selectedMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setSelectedMode(mode.id)}
+                  className={cn(
+                    'text-left p-3 rounded-md border transition-all duration-150 active:scale-[0.99] cursor-pointer',
+                    isSelected
+                      ? 'border-zinc-300 bg-zinc-800/50 text-zinc-100 shadow-xs'
+                      : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-400" />
+                      <span className="font-medium text-xs text-zinc-200">
+                        {mode.label}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-zinc-200" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-normal">
+                    {mode.desc}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 04: DAF Grounding & Optional Custom Key */}
+        <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                04
+              </span>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Candidate Profile Grounding & Environment Configuration
+              </h2>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-500">
+              Optional
+            </span>
+          </div>
+
+          <Accordion type="multiple" className="w-full space-y-3">
+            {/* DAF Accordion */}
+            <AccordionItem value="daf-details" className="border border-zinc-800 rounded-md px-3 bg-zinc-900/50">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2 text-left">
+                  <FileSpreadsheet className="h-4 w-4 text-zinc-400" />
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-200">
+                      Detailed Application Form (DAF) / Profile Grounding
+                    </div>
+                    <div className="text-[11px] text-zinc-400 font-normal">
+                      Provide your graduation degree, hometown, optional subject & hobbies for tailored questions.
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-4 border-t border-zinc-800">
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-zinc-300">
+                      Education & Graduation Degree
+                    </Label>
+                    <Input
+                      placeholder="e.g. B.Tech in Computer Science / BA History"
+                      value={education}
+                      onChange={(e) => setEducation(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-zinc-300">
+                      Native State & Hometown
+                    </Label>
+                    <Input
+                      placeholder="e.g. Varanasi, Uttar Pradesh"
+                      value={nativeState}
+                      onChange={(e) => setNativeState(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-zinc-300">
+                      Optional Subject / Specialization
+                    </Label>
+                    <Input
+                      placeholder="e.g. PSIR / Macroeconomics / Corporate Finance"
+                      value={optionalSubject}
+                      onChange={(e) => setOptionalSubject(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-zinc-300">
+                      Hobbies & Extracurricular Activities
+                    </Label>
+                    <Input
+                      placeholder="e.g. Vipassana meditation, Marathon running, Indian history"
+                      value={hobbies}
+                      onChange={(e) => setHobbies(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Custom API Key Accordion */}
+            <AccordionItem value="api-key" className="border border-zinc-800 rounded-md px-3 bg-zinc-900/50">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2 text-left">
+                  <KeyRound className="h-4 w-4 text-zinc-400" />
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-200">
+                      Custom Gemini API Key Override
+                    </div>
+                    <div className="text-[11px] text-zinc-400 font-normal">
+                      Leave empty to use default server configuration.
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-4 border-t border-zinc-800">
+                <div className="relative max-w-lg">
+                  <Input
+                    id="apikey"
+                    type={showKey ? 'text' : 'password'}
+                    placeholder="AIza… (leave empty to use server default key)"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    autoComplete="off"
+                    className="h-8 font-mono text-xs pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors"
+                    aria-label={showKey ? 'Hide API key' : 'Show API key'}
+                  >
+                    {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+
+        {/* Section 05: Commence Board Interview (Primary Action Station at the very bottom) */}
+        <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/60 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                05
+              </span>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Commence Board Interview
+              </h2>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span>Board Ready</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-3 p-3.5 rounded-md bg-zinc-950/70 border border-zinc-800/80 text-xs">
+            <div className="space-y-0.5">
+              <div className="font-semibold text-zinc-200 flex items-center gap-2">
+                <span>{selectedExamData.title}</span>
+                <span className="text-zinc-600">·</span>
+                <span className="text-zinc-400 font-mono text-[11px]">{selectedMode}</span>
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                Presiding Chair: <span className="text-zinc-300 font-medium">{selectedExamData.officerName}</span> ({selectedExamData.officerDesignation})
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 bg-zinc-900/60 px-3 py-1.5 rounded-md border border-zinc-800">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              6 Specialized Boards Available
+
+            <div className="flex items-center gap-2 text-[11px] font-mono">
+              <Badge variant="outline" className="border-zinc-800 bg-zinc-900 text-zinc-300">
+                {name.trim() ? name.trim() : 'Candidate Name Pending'}
+              </Badge>
+              <Badge variant="outline" className="border-zinc-800 bg-zinc-900 text-zinc-300">
+                {inputMode === 'video_audio' ? 'Voice + 1 FPS Vision' : 'Voice Stream'}
+              </Badge>
             </div>
           </div>
-        </div>
 
-        {/* 2-Column Workstation Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT COLUMN: Configuration Workbench (8 cols) */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Section 1: Candidate Identity & Input Devices */}
-            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
-                    01
-                  </span>
-                  <h2 className="text-sm font-semibold text-zinc-200">
-                    Candidate Profile & Input Telemetry
-                  </h2>
-                </div>
-                <span className="text-[11px] font-mono text-zinc-500">
-                  Required credentials
-                </span>
+          <div className="pt-1 space-y-2.5">
+            <Button
+              size="lg"
+              onClick={handleStart}
+              disabled={!canStart}
+              className="w-full h-12 text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              {starting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Convening Board…
+                </>
+              ) : (
+                <>
+                  Commence Board Interview
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+
+            <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono flex-wrap gap-2">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500/80" />
+                <span>Encrypted real-time bidirectional WebSocket stream</span>
               </div>
-
-              <div className="grid sm:grid-cols-2 gap-4 mb-5">
-                {/* Candidate Name */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-xs font-medium text-zinc-300 flex items-center justify-between">
-                    <span>Candidate Full Name</span>
-                    <span className="text-[10px] font-mono text-zinc-500">Required</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g. Vikramaditya Singh"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    autoComplete="off"
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                {/* Mic Telemetry Check */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-zinc-300 flex items-center justify-between">
-                    <span>Microphone Calibration</span>
-                    <span className="text-[10px] font-mono text-zinc-500">
-                      {micState.active ? `${Math.round(micState.level * 100)}% RMS` : 'Idle'}
-                    </span>
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={micState.active ? stopMeter : startMeter}
-                      className={cn(
-                        'h-9 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300',
-                        micState.active && 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20',
-                      )}
-                    >
-                      {micState.active ? (
-                        <>
-                          <MicOff className="h-3.5 w-3.5 text-emerald-400" />
-                          Stop Test
-                        </>
-                      ) : (
-                        <>
-                          <Mic className="h-3.5 w-3.5 text-zinc-400" />
-                          Test Mic
-                        </>
-                      )}
-                    </Button>
-                    <div className="flex-1 h-9 rounded-md bg-zinc-900/80 border border-zinc-800 p-1.5 flex items-center">
-                      <div className="w-full h-2 rounded bg-zinc-950 overflow-hidden relative border border-zinc-800/60">
-                        <div
-                          className="absolute inset-y-0 left-0 rounded transition-[width] duration-75"
-                          style={{
-                            width: `${meterWidth}%`,
-                            background:
-                              meterWidth > 75
-                                ? '#ef4444'
-                                : meterWidth > 40
-                                  ? '#10b981'
-                                  : '#6366f1',
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modality Selector (Audio vs Audio+Video) */}
-              <div className="pt-4 border-t border-zinc-800/80">
-                <Label className="text-xs font-medium text-zinc-300 mb-2 block">
-                  Interview Modality Stream
-                </Label>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {/* Voice Only */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInputMode('audio_only');
-                      stopCameraPreview();
-                    }}
-                    className={cn(
-                      'p-3 rounded-md border text-left transition-all duration-150 active:scale-[0.99] cursor-pointer',
-                      inputMode === 'audio_only'
-                        ? 'border-zinc-300 bg-zinc-800/60 text-zinc-100'
-                        : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <Mic className="h-4 w-4 text-zinc-300" />
-                        <span className="font-medium text-xs text-zinc-200">
-                          Voice Only (Microphone)
-                        </span>
-                      </div>
-                      {inputMode === 'audio_only' && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-zinc-200" />
-                      )}
-                    </div>
-                    <p className="text-[11px] text-zinc-400 leading-normal">
-                      Ultra-low-latency real-time voice streaming. Evaluates spoken depth, articulation, and domain knowledge.
-                    </p>
-                  </button>
-
-                  {/* Video & Voice */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInputMode('video_audio');
-                      if (!cameraActive) void startCameraPreview();
-                    }}
-                    className={cn(
-                      'p-3 rounded-md border text-left transition-all duration-150 active:scale-[0.99] cursor-pointer',
-                      inputMode === 'video_audio'
-                        ? 'border-emerald-500/60 bg-emerald-950/15 text-zinc-100'
-                        : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <Camera className="h-4 w-4 text-emerald-400" />
-                        <span className="font-medium text-xs text-zinc-200">
-                          Video & Voice (Webcam + Mic)
-                        </span>
-                      </div>
-                      <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 text-[10px] py-0 px-1.5">
-                        AI Vision
-                      </Badge>
-                    </div>
-                    <p className="text-[11px] text-zinc-400 leading-normal">
-                      Streams frames at 1 FPS. Evaluates physical posture, eye contact consistency, and composure.
-                    </p>
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* Section 2: Exam Board & Panel Track Selection */}
-            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
-                    02
-                  </span>
-                  <h2 className="text-sm font-semibold text-zinc-200">
-                    Select Target Examination Board
-                  </h2>
-                </div>
-                <span className="text-[11px] font-mono text-zinc-500">
-                  {EXAM_CARDS.length} Panels Configured
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {EXAM_CARDS.map((exam) => {
-                  const Icon = exam.icon;
-                  const isSelected = selectedExam === exam.id;
-                  return (
-                    <div
-                      key={exam.id}
-                      onClick={() => setSelectedExam(exam.id)}
-                      className={cn(
-                        'cursor-pointer rounded-md p-3.5 transition-all duration-150 border relative flex flex-col justify-between active:scale-[0.99]',
-                        isSelected
-                          ? 'border-zinc-300 bg-zinc-800/50 shadow-xs'
-                          : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/60',
-                      )}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="h-7 w-7 rounded bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-zinc-200">
-                            <Icon className="h-3.5 w-3.5" />
-                          </div>
-                          {isSelected && (
-                            <Badge className="bg-zinc-200 text-zinc-950 text-[10px] font-mono font-semibold px-1.5 py-0">
-                              ACTIVE
-                            </Badge>
-                          )}
-                        </div>
-
-                        <h3 className="font-semibold text-xs text-zinc-100 tracking-tight mb-0.5">
-                          {exam.title}
-                        </h3>
-                        <p className="text-[11px] text-zinc-400 mb-2 leading-relaxed line-clamp-1">
-                          {exam.shortDesc}
-                        </p>
-                      </div>
-
-                      <div className="pt-2.5 border-t border-zinc-800/60 space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                          <span className="text-[11px] font-medium text-zinc-200 truncate">
-                            {exam.officerName}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-zinc-500 truncate">
-                          {exam.officerDesignation}
-                        </p>
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {exam.focusTags.slice(0, 2).map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 border border-zinc-700/40"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* Section 3: Simulation Protocol Mode */}
-            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
-                    03
-                  </span>
-                  <h2 className="text-sm font-semibold text-zinc-200">
-                    Simulation Protocol & Grilling Strategy
-                  </h2>
-                </div>
-                <span className="text-[11px] font-mono text-zinc-500">
-                  Select Intensity
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {MODES.map((mode) => {
-                  const isSelected = selectedMode === mode.id;
-                  return (
-                    <button
-                      key={mode.id}
-                      type="button"
-                      onClick={() => setSelectedMode(mode.id)}
-                      className={cn(
-                        'text-left p-3 rounded-md border transition-all duration-150 active:scale-[0.99] cursor-pointer',
-                        isSelected
-                          ? 'border-zinc-300 bg-zinc-800/50 text-zinc-100 shadow-xs'
-                          : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1.5">
-                          <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-400" />
-                          <span className="font-medium text-xs text-zinc-200">
-                            {mode.label}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-zinc-200" />
-                        )}
-                      </div>
-                      <p className="text-[11px] text-zinc-400 leading-normal">
-                        {mode.desc}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* Section 4: DAF Grounding (Accordion) */}
-            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="daf-details" className="border-none">
-                  <AccordionTrigger className="hover:no-underline py-0">
-                    <div className="flex items-center justify-between w-full pr-4 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
-                          04
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <FileSpreadsheet className="h-3.5 w-3.5 text-zinc-400" />
-                            <h3 className="text-sm font-semibold text-zinc-200">
-                              Detailed Application Form (DAF) / Profile Grounding
-                            </h3>
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] font-mono text-zinc-400 border-zinc-800"
-                            >
-                              Optional
-                            </Badge>
-                          </div>
-                          <p className="text-[11px] text-zinc-400 font-normal mt-0.5">
-                            Add your graduation, native state, optional subject, and hobbies for tailored cross-examination.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-4 mt-3 border-t border-zinc-800/80">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-zinc-300">
-                          Education & Graduation Degree
-                        </Label>
-                        <Input
-                          placeholder="e.g. B.Tech in Computer Science / BA History"
-                          value={education}
-                          onChange={(e) => setEducation(e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-zinc-300">
-                          Native State & Hometown
-                        </Label>
-                        <Input
-                          placeholder="e.g. Varanasi, Uttar Pradesh"
-                          value={nativeState}
-                          onChange={(e) => setNativeState(e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-zinc-300">
-                          Optional Subject / Specialization
-                        </Label>
-                        <Input
-                          placeholder="e.g. PSIR / Macroeconomics / Corporate Finance"
-                          value={optionalSubject}
-                          onChange={(e) => setOptionalSubject(e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-medium text-zinc-300">
-                          Hobbies & Extracurricular Activities
-                        </Label>
-                        <Input
-                          placeholder="e.g. Vipassana meditation, Marathon running, Indian history"
-                          value={hobbies}
-                          onChange={(e) => setHobbies(e.target.value)}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </section>
-
-            {/* Section 5: Custom Gemini API Key (Accordion) */}
-            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="api-key" className="border-none">
-                  <AccordionTrigger className="hover:no-underline py-0">
-                    <div className="flex items-center gap-2 text-left">
-                      <KeyRound className="h-4 w-4 text-zinc-400" />
-                      <span className="text-xs font-medium text-zinc-300">
-                        Custom Gemini API Key Override
-                      </span>
-                      <span className="text-[11px] font-mono text-zinc-500">
-                        (preconfigured server environment key used by default)
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-3 mt-2 border-t border-zinc-800/80">
-                    <div className="relative">
-                      <Input
-                        id="apikey"
-                        type={showKey ? 'text' : 'password'}
-                        placeholder="AIza… (leave empty to use server default key)"
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        autoComplete="off"
-                        className="h-9 font-mono text-xs pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowKey((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors"
-                        aria-label={showKey ? 'Hide API key' : 'Show API key'}
-                      >
-                        {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </section>
-          </div>
-
-          {/* RIGHT COLUMN: Sticky Board Dossier & Launch Station (4 cols) */}
-          <div className="lg:col-span-4 lg:sticky lg:top-18 space-y-4">
-            {/* Presiding Officer Dossier */}
-            <div className="surface-panel rounded-lg border border-zinc-800/80 p-4 bg-zinc-900/60">
-              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-zinc-800/80">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
-                  Board Chamber Dossier
-                </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <div className="text-[11px] font-mono text-indigo-400 mb-0.5">
-                    {selectedExamData.title}
-                  </div>
-                  <h4 className="text-sm font-bold text-zinc-100 tracking-tight">
-                    {selectedExamData.officerName}
-                  </h4>
-                  <p className="text-[11px] text-zinc-400 font-medium leading-snug mt-0.5">
-                    {selectedExamData.officerDesignation}
-                  </p>
-                </div>
-
-                <div className="p-2.5 rounded bg-zinc-950/80 border border-zinc-800/80 text-[11px] text-zinc-400 leading-relaxed">
-                  {selectedExamData.officerLore}
-                </div>
-
-                {/* Camera Framing HUD (if video mode selected) */}
-                {inputMode === 'video_audio' && (
-                  <div className="pt-2 border-t border-zinc-800/80">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1.5">
-                        <Camera className="h-3.5 w-3.5 text-emerald-400" />
-                        Webcam Framing Check
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={cameraActive ? stopCameraPreview : startCameraPreview}
-                        className="h-6 text-[10px] px-2 border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
-                      >
-                        {cameraActive ? (
-                          <>
-                            <VideoOff className="h-2.5 w-2.5 text-red-400 mr-1" />
-                            Turn Off
-                          </>
-                        ) : (
-                          <>
-                            <Video className="h-2.5 w-2.5 text-emerald-400 mr-1" />
-                            Preview
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    <div className="relative aspect-video bg-zinc-950 rounded border border-zinc-800 overflow-hidden flex items-center justify-center">
-                      <video
-                        ref={previewVideoRef}
-                        playsInline
-                        muted
-                        className={cn(
-                          'w-full h-full object-cover -scale-x-100',
-                          !cameraActive && 'hidden',
-                        )}
-                      />
-                      {!cameraActive && (
-                        <div className="text-center p-3 text-zinc-500 text-[10px]">
-                          <Camera className="h-5 w-5 mx-auto mb-1 text-zinc-600" />
-                          Click Preview to test video framing.
-                        </div>
-                      )}
-                      {cameraActive && (
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 border border-white/10 text-[9px] font-mono text-emerald-300 flex items-center gap-1">
-                          <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
-                          1 FPS SAMPLING
-                        </div>
-                      )}
-                    </div>
-                    {cameraError && (
-                      <p className="text-[10px] text-amber-300 mt-1.5 p-1.5 rounded bg-amber-500/10 border border-amber-400/20">
-                        {cameraError}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Readiness Checklist */}
-                <div className="pt-2 border-t border-zinc-800/80 space-y-1 text-[11px] font-mono">
-                  <div className="flex items-center justify-between text-zinc-400">
-                    <span>Candidate Name:</span>
-                    <span className={name.trim() ? 'text-emerald-400' : 'text-zinc-600'}>
-                      {name.trim() ? 'Ready' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-zinc-400">
-                    <span>Audio Interface:</span>
-                    <span className="text-emerald-400">Ready</span>
-                  </div>
-                  <div className="flex items-center justify-between text-zinc-400">
-                    <span>Protocol Mode:</span>
-                    <span className="text-zinc-300">{selectedMode.split(' ')[0]}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Launch CTA Controller */}
-            <div className="surface-panel rounded-lg border border-zinc-800/80 p-4 bg-zinc-900/60 space-y-3">
-              <Button
-                size="lg"
-                onClick={handleStart}
-                disabled={!canStart}
-                className="w-full h-11 text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                {starting ? (
-                  <>
-                    <RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" />
-                    Convening Board…
-                  </>
-                ) : (
-                  <>
-                    Commence Board Interview
-                    <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                  </>
-                )}
-              </Button>
-
               {!name.trim() && (
-                <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 justify-center">
-                  <AlertCircle className="h-3 w-3 text-zinc-600" />
-                  <span>Enter candidate name to enable board commencement</span>
+                <div className="flex items-center gap-1 text-amber-400/80">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>Enter candidate name in Step 01 to proceed</span>
                 </div>
               )}
-
-              <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-500 pt-1 border-t border-zinc-800/60">
-                <ShieldCheck className="h-3 w-3 text-emerald-500/80" />
-                <span>Encrypted bidirectional WebRTC/WebSocket</span>
-              </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Footer */}
