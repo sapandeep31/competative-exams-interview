@@ -16,6 +16,7 @@ import {
   Loader2,
   Camera,
   Sparkles,
+  Move,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,6 +84,9 @@ export function LiveSessionView() {
   const playerRef = useRef<AudioPlayer | null>(null);
   const clientRef = useRef<GeminiLiveClient | null>(null);
 
+  // Container ref for drag boundaries
+  const panelContainerRef = useRef<HTMLDivElement | null>(null);
+
   // Video streaming refs
   const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const videoStreamRef = useRef<MediaStream | null>(null);
@@ -95,6 +99,20 @@ export function LiveSessionView() {
   const lastInputFlushRef = useRef<number>(0);
   const lastOutputFlushRef = useRef<number>(0);
   const endedRef = useRef<boolean>(false);
+
+  // Toggle microphone muting with instant AudioRecorder state synchronization
+  const handleToggleMute = useCallback(() => {
+    toggleMute();
+    const willBeMuted = !isMuted;
+    if (willBeMuted) {
+      recorderRef.current?.mute();
+      setMicLevel(0);
+      toast.info('Microphone muted');
+    } else {
+      recorderRef.current?.unmute();
+      toast.success('Microphone unmuted');
+    }
+  }, [isMuted, setMicLevel, toggleMute]);
 
   // --- Helpers ---
   const flushInputBuffer = useCallback(
@@ -261,6 +279,9 @@ export function LiveSessionView() {
     const recorder = new AudioRecorder({
       sampleRate: 16000,
       onChunk: (b64) => {
+        if (useInterviewStore.getState().isMuted || recorderRef.current?.isMuted()) {
+          return;
+        }
         clientRef.current?.sendAudio(b64);
         const rms = recorder.getRMS();
 
@@ -278,6 +299,10 @@ export function LiveSessionView() {
         }
       },
       onLevel: (rms) => {
+        if (useInterviewStore.getState().isMuted || recorderRef.current?.isMuted()) {
+          setMicLevel(0);
+          return;
+        }
         setMicLevel(rms);
         if (rms < 0.015 && !playerRef.current?.isPlaying()) {
           if (!silenceTimeoutRef.current) {
@@ -292,6 +317,9 @@ export function LiveSessionView() {
 
     try {
       await recorder.start();
+      if (useInterviewStore.getState().isMuted) {
+        recorder.mute();
+      }
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'Microphone access failed.';
@@ -651,6 +679,7 @@ export function LiveSessionView() {
         <div className="grid lg:grid-cols-12 gap-6 flex-1 items-stretch">
           {/* Left panel: Board Visualizer & Webcam */}
           <motion.div
+            ref={panelContainerRef}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
@@ -702,24 +731,32 @@ export function LiveSessionView() {
                 size={orbSize}
               />
 
-              {/* Picture-in-Picture Webcam Stream */}
-              <div
-                className={cn(
-                  'absolute bottom-0 right-0 w-36 sm:w-44 aspect-video rounded-xl overflow-hidden border border-white/15 bg-black/70 shadow-2xl transition-all duration-300',
-                  !isVideoEnabled && 'hidden',
-                )}
-              >
-                <video
-                  ref={videoElementRef}
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover -scale-x-100"
-                />
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-emerald-300 font-mono flex items-center gap-1 border border-white/10">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Candidate Feed
-                </div>
-              </div>
+              {/* Draggable Picture-in-Picture Webcam Stream */}
+              {isVideoEnabled && (
+                <motion.div
+                  drag
+                  dragConstraints={panelContainerRef}
+                  dragElastic={0.12}
+                  dragMomentum={false}
+                  whileDrag={{ scale: 1.05 }}
+                  className="absolute bottom-4 right-4 z-30 w-44 sm:w-56 aspect-video rounded-2xl overflow-hidden border border-white/20 bg-black/85 shadow-2xl cursor-grab active:cursor-grabbing backdrop-blur-md select-none group"
+                >
+                  <video
+                    ref={videoElementRef}
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover -scale-x-100 pointer-events-none"
+                  />
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/75 text-[10px] text-emerald-300 font-mono flex items-center gap-1.5 border border-white/10 select-none pointer-events-none">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Candidate Feed
+                  </div>
+                  <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/75 text-[10px] text-slate-300 font-mono flex items-center gap-1 border border-white/10 opacity-70 group-hover:opacity-100 transition-opacity select-none pointer-events-none">
+                    <Move className="h-2.5 w-2.5" />
+                    Drag
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Action Bar */}
@@ -727,7 +764,7 @@ export function LiveSessionView() {
               <Button
                 size="lg"
                 variant={isMuted ? 'secondary' : 'outline'}
-                onClick={toggleMute}
+                onClick={handleToggleMute}
                 className={`h-11 px-4 text-sm ${
                   isMuted
                     ? 'bg-amber-500/20 border-amber-400/40 text-amber-100 hover:bg-amber-500/30'

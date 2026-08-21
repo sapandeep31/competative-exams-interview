@@ -135,6 +135,8 @@ export class AudioRecorder {
 
   mute(): void {
     this.muted = true;
+    this.lastRms = 0;
+    this.onLevel(0);
   }
 
   unmute(): void {
