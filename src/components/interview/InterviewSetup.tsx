@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   RefreshCw,
@@ -24,6 +23,10 @@ import {
   SlidersHorizontal,
   FileSpreadsheet,
   Camera,
+  CheckCircle2,
+  AlertCircle,
+  Radio,
+  Cpu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,9 +51,6 @@ interface ExamCardConfig {
   officerDesignation: string;
   officerLore: string;
   icon: typeof Landmark;
-  color: string;
-  bgGlow: string;
-  borderActive: string;
   focusTags: string[];
 }
 
@@ -58,14 +58,11 @@ const EXAM_CARDS: ExamCardConfig[] = [
   {
     id: 'UPSC Civil Services (IAS/IPS)',
     title: 'UPSC Civil Services',
-    shortDesc: 'IAS / IPS / IFS Personality Test',
+    shortDesc: 'IAS / IPS / IFS Personality Board Test',
     officerName: 'Dr. Arvind K. Raghavan, IAS (Retd.)',
     officerDesignation: 'Former Union Home Secretary & UPSC Board Chairman',
-    officerLore: '38 years of civil administration across border districts and Cabinet Secretariat.',
+    officerLore: '38 years in civil administration across frontier districts, Cabinet Secretariat & policy reform.',
     icon: Landmark,
-    color: 'from-amber-500 to-orange-500',
-    bgGlow: 'hover:border-amber-500/50 hover:bg-amber-500/5',
-    borderActive: 'border-amber-400 bg-amber-500/10 shadow-amber-500/20',
     focusTags: ['DAF Cross-Exam', 'Constitutional Ethics', 'Policy Debates'],
   },
   {
@@ -73,25 +70,19 @@ const EXAM_CARDS: ExamCardConfig[] = [
     title: 'SSB Defence Interview',
     shortDesc: 'Officer Cadre Selection (NDA/CDS/AFCAT)',
     officerName: 'Brigadier Ranvijay Singh Rathore, SM',
-    officerDesignation: 'Senior Military Interviewing Officer (IO), SSB',
-    officerLore: '32 years in Infantry & Para SF. Veteran of Siachen & counter-insurgency ops.',
+    officerDesignation: 'Senior Military Interviewing Officer (IO), SSB Board',
+    officerLore: '32 years in Infantry & Para SF. Veteran of Siachen, counter-insurgency & strategic commands.',
     icon: Shield,
-    color: 'from-emerald-500 to-teal-500',
-    bgGlow: 'hover:border-emerald-500/50 hover:bg-emerald-500/5',
-    borderActive: 'border-emerald-400 bg-emerald-500/10 shadow-emerald-500/20',
     focusTags: ['15 OLQs Assessment', 'Rapid CIQ Series', 'Crisis Reactions'],
   },
   {
     id: 'RBI Grade B & Banking PO',
     title: 'RBI Grade B & Banking',
-    shortDesc: 'Reserve Bank of India & SBI/IBPS PO',
+    shortDesc: 'Reserve Bank of India & SBI/IBPS PO Board',
     officerName: 'Dr. Meenakshi Sundaram',
     officerDesignation: 'Deputy Governor, Reserve Bank of India',
-    officerLore: 'PhD Macroeconomics (LSE/DSE). Architect of inflation targeting & liquidity frameworks.',
+    officerLore: 'PhD Macroeconomics (LSE/DSE). Architect of monetary policy, inflation targeting & liquidity frameworks.',
     icon: Coins,
-    color: 'from-blue-500 to-cyan-500',
-    bgGlow: 'hover:border-blue-500/50 hover:bg-blue-500/5',
-    borderActive: 'border-blue-400 bg-blue-500/10 shadow-blue-500/20',
     focusTags: ['Monetary Policy & Repo', 'Macroeconomic Health', 'NPAs & FinTech'],
   },
   {
@@ -100,11 +91,8 @@ const EXAM_CARDS: ExamCardConfig[] = [
     shortDesc: 'Premier B-School Personal Interview',
     officerName: 'Prof. Debashis Roy',
     officerDesignation: 'Professor of Strategy & Chair of Admissions, IIM Ahmedabad',
-    officerLore: 'Corporate advisor to Global 500s. Expert in business models & strategy.',
+    officerLore: 'Corporate advisor to Global 500s. Scholar in competitive strategy, business models & leadership.',
     icon: GraduationCap,
-    color: 'from-purple-500 to-violet-500',
-    bgGlow: 'hover:border-purple-500/50 hover:bg-purple-500/5',
-    borderActive: 'border-purple-400 bg-purple-500/10 shadow-purple-500/20',
     focusTags: ['Academics & Resume', 'Business Acumen', 'Goal Clarity'],
   },
   {
@@ -113,24 +101,18 @@ const EXAM_CARDS: ExamCardConfig[] = [
     shortDesc: 'Provincial Civil Services (UPPSC/BPSC/MPSC)',
     officerName: 'Shri Birendra Nath Shukla',
     officerDesignation: 'Former Addl. Chief Secretary & State PSC Chairman',
-    officerLore: '34 years managing district administration, rural agrarian crisis & welfare budgets.',
+    officerLore: '34 years managing district administration, rural agrarian crisis, law & order and state welfare.',
     icon: Building2,
-    color: 'from-rose-500 to-pink-500',
-    bgGlow: 'hover:border-rose-500/50 hover:bg-rose-500/5',
-    borderActive: 'border-rose-400 bg-rose-500/10 shadow-rose-500/20',
     focusTags: ['Grassroots Governance', 'State Schemes', 'Rural Administration'],
   },
   {
     id: 'Judiciary Services (PCS-J)',
     title: 'Judiciary Services (PCS-J)',
-    shortDesc: 'Judicial Magistrate & Civil Judge Exam',
-    officerName: 'Hon\'ble Justice (Retd.) S. M. Pathak',
+    shortDesc: 'Judicial Magistrate & Civil Judge Board',
+    officerName: "Hon'ble Justice (Retd.) S. M. Pathak",
     officerDesignation: 'Former High Court Senior Judge & Judicial Board Chair',
-    officerLore: '36 years on the bench deciding landmark constitutional & criminal cases.',
+    officerLore: '36 years on the bench presiding over landmark constitutional, civil & criminal jurisprudence.',
     icon: Scale,
-    color: 'from-indigo-500 to-blue-600',
-    bgGlow: 'hover:border-indigo-500/50 hover:bg-indigo-500/5',
-    borderActive: 'border-indigo-400 bg-indigo-500/10 shadow-indigo-500/20',
     focusTags: ['Constitutional Law', 'BNS/BNSS & Evidence', 'Judicial Temperament'],
   },
 ];
@@ -334,43 +316,93 @@ export function InterviewSetup() {
     }
   };
 
+  const selectedExamData = useMemo(() => {
+    return EXAM_CARDS.find((e) => e.id === selectedExam) || EXAM_CARDS[0];
+  }, [selectedExam]);
+
   const meterWidth = Math.min(100, micState.level * 320);
 
   return (
-    <main className="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col">
-      <div className="flex-1 max-w-5xl mx-auto px-4 py-8 sm:py-12 w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        >
-          {/* Hero header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-medium mb-3">
-              <Sparkles className="h-3.5 w-3.5" />
-              India's Premier Competitive Exams AI Voice & Video Board Simulator
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-violet-200 bg-clip-text text-transparent">
-              Competitive Exams Interview Simulator
-            </h1>
-            <p className="mt-3 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-              Simulate realistic board interviews for UPSC, SSB, RBI, IIM, State PSC, and Judiciary. Supports real-time Voice and optional Webcam video vision for body language, eye contact, and vocal fluency assessment.
-            </p>
+    <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col antialiased">
+      {/* High-density Utility Top Bar */}
+      <header className="h-12 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="font-semibold text-xs tracking-wider uppercase text-zinc-200">
+              Competitive Exams Board Simulator
+            </span>
           </div>
+          <span className="text-zinc-600 hidden sm:inline">/</span>
+          <span className="text-xs text-zinc-400 font-mono hidden sm:inline">
+            v0.2.1-live
+          </span>
+        </div>
 
-          <div className="grid gap-6">
-            {/* 1. Candidate Info Card */}
-            <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-white/10">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">
-                  1
+        <div className="flex items-center gap-2">
+          <Badge
+            variant="outline"
+            className="text-[11px] font-mono border-zinc-800 bg-zinc-900/80 text-zinc-300 gap-1.5 px-2 py-0.5"
+          >
+            <Cpu className="h-3 w-3 text-indigo-400" />
+            Gemini 2.0 Flash Live
+          </Badge>
+          <Badge
+            variant="outline"
+            className="text-[11px] font-mono border-zinc-800 bg-zinc-900/80 text-zinc-300 gap-1.5 px-2 py-0.5 hidden md:inline-flex"
+          >
+            <Radio className="h-3 w-3 text-emerald-400" />
+            Bidirectional Audio & Vision
+          </Badge>
+        </div>
+      </header>
+
+      {/* Main Workspace Area */}
+      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full">
+        {/* Workspace Title Header */}
+        <div className="mb-6 pb-5 border-b border-zinc-800/80">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
+                Interview Setup & Board Protocol
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-3xl">
+                Configure your candidate credentials, target exam panel, simulation mode, and telemetry streams before convening the official interview board.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 bg-zinc-900/60 px-3 py-1.5 rounded-md border border-zinc-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              6 Specialized Boards Available
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Column Workstation Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* LEFT COLUMN: Configuration Workbench (8 cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Section 1: Candidate Identity & Input Devices */}
+            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                    01
+                  </span>
+                  <h2 className="text-sm font-semibold text-zinc-200">
+                    Candidate Profile & Input Telemetry
+                  </h2>
                 </div>
-                <h2 className="text-lg font-semibold text-white">Candidate Details & Input Devices</h2>
+                <span className="text-[11px] font-mono text-zinc-500">
+                  Required credentials
+                </span>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4 mb-4">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="name" className="text-xs font-medium text-slate-300">
-                    Candidate Full Name *
+
+              <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                {/* Candidate Name */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-xs font-medium text-zinc-300 flex items-center justify-between">
+                    <span>Candidate Full Name</span>
+                    <span className="text-[10px] font-mono text-zinc-500">Required</span>
                   </Label>
                   <Input
                     id="name"
@@ -378,12 +410,17 @@ export function InterviewSetup() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoComplete="off"
-                    className="bg-white/5 border-white/10 focus-visible:border-indigo-400/50"
+                    className="h-9 text-sm"
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label className="text-xs font-medium text-slate-300">
-                    Microphone Input Check
+
+                {/* Mic Telemetry Check */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-zinc-300 flex items-center justify-between">
+                    <span>Microphone Calibration</span>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      {micState.active ? `${Math.round(micState.level * 100)}% RMS` : 'Idle'}
+                    </span>
                   </Label>
                   <div className="flex items-center gap-2">
                     <Button
@@ -392,41 +429,49 @@ export function InterviewSetup() {
                       size="sm"
                       onClick={micState.active ? stopMeter : startMeter}
                       className={cn(
-                        'bg-white/5 border-white/10 hover:bg-white/10 text-xs h-10',
-                        micState.active && 'border-emerald-400/40 text-emerald-200 bg-emerald-500/10',
+                        'h-9 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300',
+                        micState.active && 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20',
                       )}
                     >
                       {micState.active ? (
                         <>
-                          <MicOff className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                          <MicOff className="h-3.5 w-3.5 text-emerald-400" />
                           Stop Test
                         </>
                       ) : (
                         <>
-                          <Mic className="h-3.5 w-3.5 mr-1 text-indigo-300" />
+                          <Mic className="h-3.5 w-3.5 text-zinc-400" />
                           Test Mic
                         </>
                       )}
                     </Button>
-                    <div className="flex-1 h-3 rounded-full bg-white/5 border border-white/10 overflow-hidden relative">
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75"
-                        style={{
-                          width: `${meterWidth}%`,
-                          background: 'linear-gradient(90deg, #10b981 0%, #22d3ee 60%, #a855f7 100%)',
-                        }}
-                      />
+                    <div className="flex-1 h-9 rounded-md bg-zinc-900/80 border border-zinc-800 p-1.5 flex items-center">
+                      <div className="w-full h-2 rounded bg-zinc-950 overflow-hidden relative border border-zinc-800/60">
+                        <div
+                          className="absolute inset-y-0 left-0 rounded transition-[width] duration-75"
+                          style={{
+                            width: `${meterWidth}%`,
+                            background:
+                              meterWidth > 75
+                                ? '#ef4444'
+                                : meterWidth > 40
+                                  ? '#10b981'
+                                  : '#6366f1',
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Input Mode Selector: Audio Only vs Audio + Video */}
-              <div className="pt-3 border-t border-white/5">
-                <Label className="text-xs font-medium text-slate-300 mb-2 block">
-                  Interview Modality (Choose Practice Mode)
+              {/* Modality Selector (Audio vs Audio+Video) */}
+              <div className="pt-4 border-t border-zinc-800/80">
+                <Label className="text-xs font-medium text-zinc-300 mb-2 block">
+                  Interview Modality Stream
                 </Label>
                 <div className="grid sm:grid-cols-2 gap-3">
+                  {/* Voice Only */}
                   <button
                     type="button"
                     onClick={() => {
@@ -434,21 +479,29 @@ export function InterviewSetup() {
                       stopCameraPreview();
                     }}
                     className={cn(
-                      'p-3.5 rounded-xl border text-left transition-all',
+                      'p-3 rounded-md border text-left transition-all duration-150 active:scale-[0.99] cursor-pointer',
                       inputMode === 'audio_only'
-                        ? 'border-indigo-400 bg-indigo-500/15 text-white shadow-md shadow-indigo-500/10'
-                        : 'border-white/10 bg-white/[0.02] hover:bg-white/5 text-slate-300',
+                        ? 'border-zinc-300 bg-zinc-800/60 text-zinc-100'
+                        : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
                     )}
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Mic className="h-4 w-4 text-indigo-400" />
-                      <span className="font-semibold text-sm">Voice Only (Microphone)</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <Mic className="h-4 w-4 text-zinc-300" />
+                        <span className="font-medium text-xs text-zinc-200">
+                          Voice Only (Microphone)
+                        </span>
+                      </div>
+                      {inputMode === 'audio_only' && (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-zinc-200" />
+                      )}
                     </div>
-                    <p className="text-xs text-slate-400">
-                      Standard audio stream. Evaluates verbal fluency, logic, and policy reasoning.
+                    <p className="text-[11px] text-zinc-400 leading-normal">
+                      Ultra-low-latency real-time voice streaming. Evaluates spoken depth, articulation, and domain knowledge.
                     </p>
                   </button>
 
+                  {/* Video & Voice */}
                   <button
                     type="button"
                     onClick={() => {
@@ -456,94 +509,48 @@ export function InterviewSetup() {
                       if (!cameraActive) void startCameraPreview();
                     }}
                     className={cn(
-                      'p-3.5 rounded-xl border text-left transition-all',
+                      'p-3 rounded-md border text-left transition-all duration-150 active:scale-[0.99] cursor-pointer',
                       inputMode === 'video_audio'
-                        ? 'border-emerald-400 bg-emerald-500/15 text-white shadow-md shadow-emerald-500/10'
-                        : 'border-white/10 bg-white/[0.02] hover:bg-white/5 text-slate-300',
+                        ? 'border-emerald-500/60 bg-emerald-950/15 text-zinc-100'
+                        : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
                     )}
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Camera className="h-4 w-4 text-emerald-400" />
-                      <span className="font-semibold text-sm">Video & Voice (Webcam + Mic)</span>
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-[10px]">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <Camera className="h-4 w-4 text-emerald-400" />
+                        <span className="font-medium text-xs text-zinc-200">
+                          Video & Voice (Webcam + Mic)
+                        </span>
+                      </div>
+                      <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 text-[10px] py-0 px-1.5">
                         AI Vision
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-400">
-                      Streams video frames (~1 FPS) to evaluate posture, eye contact, gestures & visual poise.
+                    <p className="text-[11px] text-zinc-400 leading-normal">
+                      Streams frames at 1 FPS. Evaluates physical posture, eye contact consistency, and composure.
                     </p>
                   </button>
                 </div>
-
-                {/* Webcam Test & Preview Box (if video_audio is selected) */}
-                {inputMode === 'video_audio' && (
-                  <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Camera className="h-4 w-4 text-emerald-400" />
-                        <span className="text-sm font-semibold text-white">Camera Check & Framing Preview</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={cameraActive ? stopCameraPreview : startCameraPreview}
-                        className="text-xs h-8 bg-white/5 border-white/10 hover:bg-white/10"
-                      >
-                        {cameraActive ? (
-                          <>
-                            <VideoOff className="h-3.5 w-3.5 mr-1 text-red-400" />
-                            Turn Off Camera
-                          </>
-                        ) : (
-                          <>
-                            <Video className="h-3.5 w-3.5 mr-1 text-emerald-400" />
-                            Start Camera Test
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    <div className="relative w-full max-w-sm mx-auto aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/10 flex items-center justify-center">
-                      <video
-                        ref={previewVideoRef}
-                        playsInline
-                        muted
-                        className={cn(
-                          'w-full h-full object-cover -scale-x-100',
-                          !cameraActive && 'hidden',
-                        )}
-                      />
-                      {!cameraActive && (
-                        <div className="text-center p-4 text-slate-400 text-xs">
-                          <Camera className="h-8 w-8 mx-auto mb-2 text-slate-600" />
-                          Click <span className="text-emerald-300">Start Camera Test</span> to preview your video framing and posture before connecting.
-                        </div>
-                      )}
-                    </div>
-                    {cameraError && (
-                      <p className="text-xs text-amber-300 mt-2 text-center bg-amber-500/10 p-2 rounded-lg border border-amber-400/20">
-                        {cameraError}
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
-            </div>
+            </section>
 
-            {/* 2. Select Exam Track */}
-            <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-white/10">
-              <div className="flex items-center justify-between gap-2 mb-4">
+            {/* Section 2: Exam Board & Panel Track Selection */}
+            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">
-                    2
-                  </div>
-                  <h2 className="text-lg font-semibold text-white">Select Exam Board & Track</h2>
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                    02
+                  </span>
+                  <h2 className="text-sm font-semibold text-zinc-200">
+                    Select Target Examination Board
+                  </h2>
                 </div>
-                <span className="text-xs text-slate-400">Click to choose your target interview</span>
+                <span className="text-[11px] font-mono text-zinc-500">
+                  {EXAM_CARDS.length} Panels Configured
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {EXAM_CARDS.map((exam) => {
                   const Icon = exam.icon;
                   const isSelected = selectedExam === exam.id;
@@ -552,55 +559,47 @@ export function InterviewSetup() {
                       key={exam.id}
                       onClick={() => setSelectedExam(exam.id)}
                       className={cn(
-                        'cursor-pointer rounded-xl p-4 transition-all duration-200 border relative flex flex-col justify-between',
-                        exam.bgGlow,
+                        'cursor-pointer rounded-md p-3.5 transition-all duration-150 border relative flex flex-col justify-between active:scale-[0.99]',
                         isSelected
-                          ? cn('border-2 shadow-lg', exam.borderActive)
-                          : 'border-white/10 bg-white/[0.02]',
+                          ? 'border-zinc-300 bg-zinc-800/50 shadow-xs'
+                          : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/60',
                       )}
                     >
                       <div>
-                        <div className="flex items-center justify-between mb-2.5">
-                          <div
-                            className={cn(
-                              'h-9 w-9 rounded-lg bg-gradient-to-br flex items-center justify-center text-white shadow-md',
-                              exam.color,
-                            )}
-                          >
-                            <Icon className="h-5 w-5" />
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="h-7 w-7 rounded bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-zinc-200">
+                            <Icon className="h-3.5 w-3.5" />
                           </div>
                           {isSelected && (
-                            <Badge className="bg-indigo-500 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5">
-                              Selected
+                            <Badge className="bg-zinc-200 text-zinc-950 text-[10px] font-mono font-semibold px-1.5 py-0">
+                              ACTIVE
                             </Badge>
                           )}
                         </div>
-                        <h3 className="font-bold text-base text-white tracking-tight mb-1">
+
+                        <h3 className="font-semibold text-xs text-zinc-100 tracking-tight mb-0.5">
                           {exam.title}
                         </h3>
-                        <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+                        <p className="text-[11px] text-zinc-400 mb-2 leading-relaxed line-clamp-1">
                           {exam.shortDesc}
                         </p>
                       </div>
 
-                      <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+                      <div className="pt-2.5 border-t border-zinc-800/60 space-y-1.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-                          <span className="text-xs font-bold text-slate-100 truncate">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                          <span className="text-[11px] font-medium text-zinc-200 truncate">
                             {exam.officerName}
                           </span>
                         </div>
-                        <p className="text-[11px] text-indigo-300 font-medium leading-tight">
+                        <p className="text-[10px] text-zinc-500 truncate">
                           {exam.officerDesignation}
                         </p>
-                        <p className="text-[10px] text-slate-400 leading-snug line-clamp-2">
-                          {exam.officerLore}
-                        </p>
                         <div className="flex flex-wrap gap-1 pt-1">
-                          {exam.focusTags.map((tag) => (
+                          {exam.focusTags.slice(0, 2).map((tag) => (
                             <span
                               key={tag}
-                              className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-300 border border-white/5"
+                              className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 border border-zinc-700/40"
                             >
                               {tag}
                             </span>
@@ -611,18 +610,25 @@ export function InterviewSetup() {
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            {/* 3. Select Simulation Mode */}
-            <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-white/10">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">
-                  3
+            {/* Section 3: Simulation Protocol Mode */}
+            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800/80">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                    03
+                  </span>
+                  <h2 className="text-sm font-semibold text-zinc-200">
+                    Simulation Protocol & Grilling Strategy
+                  </h2>
                 </div>
-                <h2 className="text-lg font-semibold text-white">Choose Simulation Mode</h2>
+                <span className="text-[11px] font-mono text-zinc-500">
+                  Select Intensity
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {MODES.map((mode) => {
                   const isSelected = selectedMode === mode.id;
                   return (
@@ -631,175 +637,304 @@ export function InterviewSetup() {
                       type="button"
                       onClick={() => setSelectedMode(mode.id)}
                       className={cn(
-                        'text-left p-3.5 rounded-xl border transition-all duration-150',
+                        'text-left p-3 rounded-md border transition-all duration-150 active:scale-[0.99] cursor-pointer',
                         isSelected
-                          ? 'border-indigo-400 bg-indigo-500/15 text-white shadow-md shadow-indigo-500/10'
-                          : 'border-white/10 bg-white/[0.02] hover:bg-white/5 text-slate-300',
+                          ? 'border-zinc-300 bg-zinc-800/50 text-zinc-100 shadow-xs'
+                          : 'border-zinc-800/80 bg-zinc-900/30 hover:border-zinc-700 text-zinc-400',
                       )}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <SlidersHorizontal className="h-3.5 w-3.5 text-indigo-400" />
-                        <span className="font-semibold text-sm">{mode.label}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-400" />
+                          <span className="font-medium text-xs text-zinc-200">
+                            {mode.label}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-zinc-200" />
+                        )}
                       </div>
-                      <p className="text-xs text-slate-400 leading-snug">{mode.desc}</p>
+                      <p className="text-[11px] text-zinc-400 leading-normal">
+                        {mode.desc}
+                      </p>
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            {/* 4. Optional DAF & Profile Grounding */}
-            <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-white/10">
+            {/* Section 4: DAF Grounding (Accordion) */}
+            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="daf-details" className="border-none">
                   <AccordionTrigger className="hover:no-underline py-0">
-                    <div className="flex items-center gap-2 text-left">
-                      <div className="h-7 w-7 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">
-                        4
-                      </div>
-                      <div>
-                        <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                          <FileSpreadsheet className="h-4 w-4 text-indigo-400" />
-                          Detailed Application Form (DAF) / Background Grounding
-                          <Badge variant="outline" className="text-[10px] text-slate-400 border-white/10">
-                            Optional
-                          </Badge>
-                        </h3>
-                        <p className="text-xs text-slate-400 font-normal">
-                          Add your degree, native state, optional subject, and hobbies for authentic personalized questioning.
-                        </p>
+                    <div className="flex items-center justify-between w-full pr-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center h-5 w-5 rounded bg-zinc-800 text-zinc-300 text-[11px] font-mono font-bold">
+                          04
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <FileSpreadsheet className="h-3.5 w-3.5 text-zinc-400" />
+                            <h3 className="text-sm font-semibold text-zinc-200">
+                              Detailed Application Form (DAF) / Profile Grounding
+                            </h3>
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-mono text-zinc-400 border-zinc-800"
+                            >
+                              Optional
+                            </Badge>
+                          </div>
+                          <p className="text-[11px] text-zinc-400 font-normal mt-0.5">
+                            Add your graduation, native state, optional subject, and hobbies for tailored cross-examination.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-5">
+                  <AccordionContent className="pt-4 mt-3 border-t border-zinc-800/80">
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="grid gap-1.5">
-                        <Label className="text-xs font-medium text-slate-300">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-zinc-300">
                           Education & Graduation Degree
                         </Label>
                         <Input
                           placeholder="e.g. B.Tech in Computer Science / BA History"
                           value={education}
                           onChange={(e) => setEducation(e.target.value)}
-                          className="bg-white/5 border-white/10 text-sm"
+                          className="h-8 text-xs"
                         />
                       </div>
-                      <div className="grid gap-1.5">
-                        <Label className="text-xs font-medium text-slate-300">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-zinc-300">
                           Native State & Hometown
                         </Label>
                         <Input
                           placeholder="e.g. Varanasi, Uttar Pradesh"
                           value={nativeState}
                           onChange={(e) => setNativeState(e.target.value)}
-                          className="bg-white/5 border-white/10 text-sm"
+                          className="h-8 text-xs"
                         />
                       </div>
-                      <div className="grid gap-1.5">
-                        <Label className="text-xs font-medium text-slate-300">
-                          Optional Subject / Specialization / Cadre Preference
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-zinc-300">
+                          Optional Subject / Specialization
                         </Label>
                         <Input
-                          placeholder="e.g. Political Science & International Relations (PSIR) / Finance"
+                          placeholder="e.g. PSIR / Macroeconomics / Corporate Finance"
                           value={optionalSubject}
                           onChange={(e) => setOptionalSubject(e.target.value)}
-                          className="bg-white/5 border-white/10 text-sm"
+                          className="h-8 text-xs"
                         />
                       </div>
-                      <div className="grid gap-1.5">
-                        <Label className="text-xs font-medium text-slate-300">
-                          Hobbies, Sports & Extracurriculars
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-zinc-300">
+                          Hobbies & Extracurricular Activities
                         </Label>
                         <Input
-                          placeholder="e.g. Basketball, Vipassana meditation, Reading Indian history"
+                          placeholder="e.g. Vipassana meditation, Marathon running, Indian history"
                           value={hobbies}
                           onChange={(e) => setHobbies(e.target.value)}
-                          className="bg-white/5 border-white/10 text-sm"
+                          className="h-8 text-xs"
                         />
                       </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </div>
+            </section>
 
-            {/* 5. Optional Gemini API Key */}
-            <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-xl border border-white/10">
+            {/* Section 5: Custom Gemini API Key (Accordion) */}
+            <section className="surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="api-key" className="border-none">
                   <AccordionTrigger className="hover:no-underline py-0">
                     <div className="flex items-center gap-2 text-left">
-                      <KeyRound className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-300">
-                        Custom Gemini API Key
+                      <KeyRound className="h-4 w-4 text-zinc-400" />
+                      <span className="text-xs font-medium text-zinc-300">
+                        Custom Gemini API Key Override
                       </span>
-                      <span className="text-xs text-slate-500 font-normal">
-                        (optional — preconfigured with server key)
+                      <span className="text-[11px] font-mono text-zinc-500">
+                        (preconfigured server environment key used by default)
                       </span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pt-4">
+                  <AccordionContent className="pt-3 mt-2 border-t border-zinc-800/80">
                     <div className="relative">
                       <Input
                         id="apikey"
                         type={showKey ? 'text' : 'password'}
-                        placeholder="AIza… (leave empty to use server preconfigured key)"
+                        placeholder="AIza… (leave empty to use server default key)"
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         autoComplete="off"
-                        className="bg-white/5 border-white/10 focus-visible:border-indigo-400/50 pr-10 font-mono text-sm"
+                        className="h-9 font-mono text-xs pr-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowKey((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors"
                         aria-label={showKey ? 'Hide API key' : 'Show API key'}
                       >
-                        {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            </section>
+          </div>
+
+          {/* RIGHT COLUMN: Sticky Board Dossier & Launch Station (4 cols) */}
+          <div className="lg:col-span-4 lg:sticky lg:top-18 space-y-4">
+            {/* Presiding Officer Dossier */}
+            <div className="surface-panel rounded-lg border border-zinc-800/80 p-4 bg-zinc-900/60">
+              <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-zinc-800/80">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 font-semibold">
+                  Board Chamber Dossier
+                </span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="text-[11px] font-mono text-indigo-400 mb-0.5">
+                    {selectedExamData.title}
+                  </div>
+                  <h4 className="text-sm font-bold text-zinc-100 tracking-tight">
+                    {selectedExamData.officerName}
+                  </h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-snug mt-0.5">
+                    {selectedExamData.officerDesignation}
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded bg-zinc-950/80 border border-zinc-800/80 text-[11px] text-zinc-400 leading-relaxed">
+                  {selectedExamData.officerLore}
+                </div>
+
+                {/* Camera Framing HUD (if video mode selected) */}
+                {inputMode === 'video_audio' && (
+                  <div className="pt-2 border-t border-zinc-800/80">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5 text-emerald-400" />
+                        Webcam Framing Check
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={cameraActive ? stopCameraPreview : startCameraPreview}
+                        className="h-6 text-[10px] px-2 border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
+                      >
+                        {cameraActive ? (
+                          <>
+                            <VideoOff className="h-2.5 w-2.5 text-red-400 mr-1" />
+                            Turn Off
+                          </>
+                        ) : (
+                          <>
+                            <Video className="h-2.5 w-2.5 text-emerald-400 mr-1" />
+                            Preview
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="relative aspect-video bg-zinc-950 rounded border border-zinc-800 overflow-hidden flex items-center justify-center">
+                      <video
+                        ref={previewVideoRef}
+                        playsInline
+                        muted
+                        className={cn(
+                          'w-full h-full object-cover -scale-x-100',
+                          !cameraActive && 'hidden',
+                        )}
+                      />
+                      {!cameraActive && (
+                        <div className="text-center p-3 text-zinc-500 text-[10px]">
+                          <Camera className="h-5 w-5 mx-auto mb-1 text-zinc-600" />
+                          Click Preview to test video framing.
+                        </div>
+                      )}
+                      {cameraActive && (
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 border border-white/10 text-[9px] font-mono text-emerald-300 flex items-center gap-1">
+                          <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                          1 FPS SAMPLING
+                        </div>
+                      )}
+                    </div>
+                    {cameraError && (
+                      <p className="text-[10px] text-amber-300 mt-1.5 p-1.5 rounded bg-amber-500/10 border border-amber-400/20">
+                        {cameraError}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Readiness Checklist */}
+                <div className="pt-2 border-t border-zinc-800/80 space-y-1 text-[11px] font-mono">
+                  <div className="flex items-center justify-between text-zinc-400">
+                    <span>Candidate Name:</span>
+                    <span className={name.trim() ? 'text-emerald-400' : 'text-zinc-600'}>
+                      {name.trim() ? 'Ready' : 'Pending'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-zinc-400">
+                    <span>Audio Interface:</span>
+                    <span className="text-emerald-400">Ready</span>
+                  </div>
+                  <div className="flex items-center justify-between text-zinc-400">
+                    <span>Protocol Mode:</span>
+                    <span className="text-zinc-300">{selectedMode.split(' ')[0]}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Launch CTA */}
-            <div className="pt-2">
+            {/* Launch CTA Controller */}
+            <div className="surface-panel rounded-lg border border-zinc-800/80 p-4 bg-zinc-900/60 space-y-3">
               <Button
                 size="lg"
                 onClick={handleStart}
                 disabled={!canStart}
-                className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 text-white shadow-xl shadow-indigo-500/25 disabled:opacity-40 disabled:cursor-not-allowed h-14 text-lg font-bold rounded-2xl"
+                className="w-full h-11 text-xs font-semibold uppercase tracking-wider bg-zinc-100 hover:bg-white text-zinc-950 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 {starting ? (
                   <>
-                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                    Connecting to {selectedExam} Board…
+                    <RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" />
+                    Convening Board…
                   </>
                 ) : (
                   <>
-                    Commence {selectedExam} Mock Interview
-                    <ArrowRight className="h-5 w-5 ml-2" />
+                    Commence Board Interview
+                    <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </>
                 )}
               </Button>
-              {!canStart && (
-                <p className="text-xs text-slate-500 mt-2 text-center">
-                  Please enter your candidate name above to commence.
-                </p>
-              )}
-            </div>
 
-            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mt-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              Low-latency real-time streaming with Google Gemini Live API. {inputMode === 'video_audio' ? 'Streaming Audio & Webcam Vision (1 FPS).' : 'Streaming Audio.'}
+              {!name.trim() && (
+                <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 justify-center">
+                  <AlertCircle className="h-3 w-3 text-zinc-600" />
+                  <span>Enter candidate name to enable board commencement</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-500 pt-1 border-t border-zinc-800/60">
+                <ShieldCheck className="h-3 w-3 text-emerald-500/80" />
+                <span>Encrypted bidirectional WebRTC/WebSocket</span>
+              </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      <footer className="mt-auto px-4 py-6 text-center text-xs text-slate-500 border-t border-white/5">
-        Competitive Exams AI Interview Preparation · Powered by Google Gemini Live API
+      {/* Footer */}
+      <footer className="mt-auto h-10 px-4 sm:px-6 border-t border-zinc-800/80 bg-zinc-950/80 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+        <div>Competitive Exams AI Interview Simulator</div>
+        <div>Standardized Evaluation Engine</div>
       </footer>
     </main>
   );

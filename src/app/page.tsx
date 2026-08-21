@@ -10,7 +10,7 @@ export default function Home() {
   const phase = useInterviewStore((s) => s.phase);
 
   return (
-    <main className="min-h-screen w-full bg-slate-950 text-slate-100 overflow-x-hidden">
+    <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 overflow-x-hidden selection:bg-indigo-500/30 selection:text-indigo-200">
       <AnimatePresence mode="wait">
         {phase === 'setup' && (
           <motion.div

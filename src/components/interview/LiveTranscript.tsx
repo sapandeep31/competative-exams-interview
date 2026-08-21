@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MessageSquareText, User, ShieldCheck } from 'lucide-react';
 import type { TranscriptEntry } from '@/core/state/types';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +13,7 @@ interface LiveTranscriptProps {
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 export function LiveTranscript({ transcript, className }: LiveTranscriptProps) {
@@ -22,7 +23,6 @@ export function LiveTranscript({ transcript, className }: LiveTranscriptProps) {
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
-    // Defer one frame so the new bubble has rendered.
     const id = requestAnimationFrame(() => {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     });
@@ -32,65 +32,90 @@ export function LiveTranscript({ transcript, className }: LiveTranscriptProps) {
   return (
     <div
       className={cn(
-        'glass-panel rounded-2xl p-4 h-72 sm:h-80 flex flex-col',
+        'surface-panel rounded-lg p-4 flex flex-col h-full border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm',
         className,
       )}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-slate-300">Live Transcript</h3>
-        <span className="text-xs text-slate-500">
-          {transcript.length} messages
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800/80">
+        <div className="flex items-center gap-2">
+          <MessageSquareText className="h-4 w-4 text-zinc-400" />
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+            Real-time Exchange Transcript
+          </h3>
+        </div>
+        <span className="text-[11px] font-mono text-zinc-400 bg-zinc-800/60 px-2 py-0.5 rounded border border-zinc-700/40">
+          {transcript.length} {transcript.length === 1 ? 'turn' : 'turns'}
         </span>
       </div>
+
       <div
         ref={viewportRef}
-        className="flex-1 overflow-y-auto custom-scroll pr-2"
+        className="flex-1 overflow-y-auto custom-scroll pr-1.5 space-y-3"
       >
-        <div className="flex flex-col gap-3">
-          <AnimatePresence initial={false}>
-            {transcript.length === 0 && (
-              <div
-                key="empty"
-                className="text-center text-sm text-slate-500 py-8"
-              >
-                Transcript will appear here as the conversation unfolds.
+        <AnimatePresence initial={false}>
+          {transcript.length === 0 ? (
+            <div
+              key="empty"
+              className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500"
+            >
+              <div className="h-8 w-8 rounded-md bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center mb-2">
+                <MessageSquareText className="h-4 w-4 text-zinc-400" />
               </div>
-            )}
-            {transcript.map((entry) => {
+              <p className="text-xs font-medium text-zinc-400">Board chamber is quiet</p>
+              <p className="text-[11px] text-zinc-500 max-w-[220px] mt-0.5">
+                Spoken dialogue will appear here live as you and the board interact.
+              </p>
+            </div>
+          ) : (
+            transcript.map((entry) => {
               const isUser = entry.role === 'user';
               return (
                 <motion.div
                   key={entry.id}
                   layout
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
                   className={cn(
-                    'flex flex-col max-w-[85%]',
-                    isUser ? 'self-end items-end' : 'self-start items-start',
+                    'flex flex-col',
+                    isUser ? 'items-end' : 'items-start',
                   )}
                 >
-                  <div className="flex items-center gap-2 mb-1 text-[10px] uppercase tracking-wide text-slate-500">
-                    <span>{isUser ? 'You' : 'Interviewer'}</span>
-                    <span aria-hidden>·</span>
-                    <span>{formatTime(entry.timestamp)}</span>
+                  <div className="flex items-center gap-1.5 mb-1 text-[10px] text-zinc-400 font-mono">
+                    {isUser ? (
+                      <>
+                        <span className="text-zinc-500">{formatTime(entry.timestamp)}</span>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-300 font-medium text-[10px] border border-emerald-500/20">
+                          <User className="h-2.5 w-2.5" />
+                          Candidate
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-300 font-medium text-[10px] border border-indigo-500/20">
+                          <ShieldCheck className="h-2.5 w-2.5" />
+                          Board Panel
+                        </span>
+                        <span className="text-zinc-500">{formatTime(entry.timestamp)}</span>
+                      </>
+                    )}
                   </div>
                   <div
                     className={cn(
-                      'px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed shadow-md backdrop-blur-md border break-words',
+                      'max-w-[92%] px-3 py-2 rounded-md text-[13px] leading-relaxed border transition-colors',
                       isUser
-                        ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-50 rounded-br-md'
-                        : 'bg-indigo-500/15 border-indigo-400/30 text-indigo-50 rounded-bl-md',
+                        ? 'bg-zinc-800/80 border-zinc-700/70 text-zinc-100 rounded-tr-none'
+                        : 'bg-zinc-900/90 border-zinc-800 text-zinc-200 rounded-tl-none',
                     )}
                   >
                     {entry.text}
                   </div>
                 </motion.div>
               );
-            })}
-          </AnimatePresence>
-        </div>
+            })
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

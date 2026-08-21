@@ -567,6 +567,7 @@ export function LiveSessionView() {
 
   // Connect on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void connect();
     return () => teardown();
   }, [connect, teardown]);
@@ -597,133 +598,135 @@ export function LiveSessionView() {
     const mode = config.simulationMode || config.level;
     const officer = BOARD_OFFICERS[exam];
     return (
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <Badge
           variant="secondary"
-          className="bg-indigo-500/15 border border-indigo-400/30 text-indigo-100 gap-1 font-medium"
+          className="bg-zinc-900 border border-zinc-800 text-zinc-300 gap-1 font-mono text-[11px] px-2 py-0.5"
         >
-          <User className="h-3 w-3" />
+          <User className="h-3 w-3 text-zinc-400" />
           {config.candidateName}
         </Badge>
         {officer && (
           <Badge
             variant="secondary"
-            className="bg-emerald-500/15 border border-emerald-400/30 text-emerald-100 gap-1 font-medium"
+            className="bg-zinc-900 border border-zinc-800 text-zinc-300 gap-1 font-mono text-[11px] px-2 py-0.5 hidden sm:inline-flex"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {officer.name}
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {officer.name.split(',')[0]}
           </Badge>
         )}
         <Badge
-          variant="secondary"
-          className="bg-amber-500/15 border border-amber-400/30 text-amber-100 gap-1 font-medium"
+          variant="outline"
+          className="bg-zinc-900/80 border border-zinc-800 text-zinc-300 font-mono text-[11px] px-2 py-0.5"
         >
-          <BadgeCheck className="h-3 w-3" />
-          {exam}
+          <BadgeCheck className="h-3 w-3 text-indigo-400" />
+          {exam.split('(')[0].trim()}
         </Badge>
         <Badge
           variant="outline"
-          className="bg-white/5 border-white/15 text-slate-300 font-normal"
+          className="bg-zinc-900/60 border border-zinc-800 text-zinc-400 font-mono text-[10px] hidden md:inline-flex"
         >
-          {mode}
+          {mode.split(' ')[0]}
         </Badge>
         {config.inputMode === 'video_audio' && (
-          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 text-[10px] gap-1">
+          <Badge className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] gap-1 py-0 px-1.5">
             <Camera className="h-2.5 w-2.5" />
-            Vision Active
+            Vision
           </Badge>
         )}
       </div>
     );
   }, [config]);
 
-  const orbSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 240 : 300;
+  const orbSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 280;
 
   return (
-    <main className="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top bar */}
-      <header className="px-4 sm:px-6 py-4 border-b border-white/5 backdrop-blur-sm bg-slate-950/60 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${
-                  connectionState === 'connected'
-                    ? 'bg-emerald-400 animate-pulse'
-                    : connectionState === 'connecting'
-                      ? 'bg-amber-400 animate-pulse'
-                      : 'bg-red-500'
-                }`}
-              />
-            </div>
-            <span className="text-sm text-slate-400 capitalize">
+    <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col antialiased">
+      {/* High-density Utility Header */}
+      <header className="h-12 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                connectionState === 'connected'
+                  ? 'bg-emerald-400'
+                  : connectionState === 'connecting'
+                    ? 'bg-amber-400 animate-pulse'
+                    : 'bg-red-500'
+              }`}
+            />
+            <span className="text-xs font-mono uppercase tracking-wider text-zinc-300">
               {connectionState === 'connected'
-                ? 'Live'
+                ? 'Board Session Live'
                 : connectionState === 'connecting'
                   ? 'Connecting…'
                   : 'Disconnected'}
             </span>
           </div>
+        </div>
 
-          {roleBadge}
+        {roleBadge}
 
-          <div className="flex items-center gap-2 text-sm text-slate-300 font-mono bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            {formatTimer(elapsedSeconds)}
-          </div>
+        <div className="flex items-center gap-2 text-xs font-mono text-zinc-300 bg-zinc-900/80 border border-zinc-800 rounded px-2.5 py-1">
+          <Clock className="h-3 w-3 text-zinc-400" />
+          {formatTimer(elapsedSeconds)}
         </div>
       </header>
 
-      {/* Main content */}
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col">
-        <div className="grid lg:grid-cols-12 gap-6 flex-1 items-stretch">
-          {/* Left panel: Board Visualizer & Webcam */}
+      {/* Main Workspace Layout */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-stretch">
+          {/* Left / Center Chamber: Visualizer, HUD & Controls (7 cols) */}
           <motion.div
             ref={panelContainerRef}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-between gap-6 min-h-[480px] relative overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="lg:col-span-7 surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40 flex flex-col items-center justify-between gap-5 min-h-[460px] relative overflow-hidden"
           >
             {/* Header info */}
-            <div className="text-center w-full">
-              {config && BOARD_OFFICERS[config.examCategory || config.role] && (
-                <div className="mb-2">
-                  <span className="text-[11px] uppercase tracking-widest font-semibold text-indigo-400">
-                    Active Board Interviewer
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800/80 flex-wrap gap-2">
+              {config && BOARD_OFFICERS[config.examCategory || config.role] ? (
+                <div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-indigo-400">
+                    Presiding Panel Chair
+                  </div>
+                  <h3 className="text-sm font-bold text-zinc-100 tracking-tight">
                     {BOARD_OFFICERS[config.examCategory || config.role].name}
                   </h3>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto line-clamp-1">
+                  <p className="text-[11px] text-zinc-400 truncate max-w-md">
                     {BOARD_OFFICERS[config.examCategory || config.role].designation}
                   </p>
                 </div>
+              ) : (
+                <div className="text-xs font-semibold text-zinc-200">Official Board Chamber</div>
               )}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
+
+              {/* Status Pill */}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-900/90 border border-zinc-800 text-[11px] font-mono text-zinc-300">
                 <span
                   className={cn(
-                    'h-2 w-2 rounded-full',
+                    'h-1.5 w-1.5 rounded-full',
                     audioState === 'speaking'
-                      ? 'bg-violet-400 animate-pulse'
+                      ? 'bg-indigo-400 animate-pulse'
                       : audioState === 'listening'
                         ? 'bg-emerald-400 animate-pulse'
                         : audioState === 'thinking'
                           ? 'bg-amber-400 animate-pulse'
-                          : 'bg-slate-500',
+                          : 'bg-zinc-500',
                   )}
                 />
-                <span className="font-medium capitalize">
+                <span className="capitalize">
                   {audioState === 'idle' && 'Channel Ready'}
-                  {audioState === 'listening' && 'Listening to your response…'}
+                  {audioState === 'listening' && 'Listening to response…'}
                   {audioState === 'thinking' && 'Board evaluating…'}
                   {audioState === 'speaking' && 'Board speaking…'}
                 </span>
               </div>
             </div>
 
-            {/* Visualizer & Video Grid */}
-            <div className="relative w-full flex items-center justify-center my-auto">
+            {/* Visualizer & Picture-in-Picture Video */}
+            <div className="relative w-full flex items-center justify-center my-auto py-2">
               <AudioBallVisualizer
                 state={audioState}
                 micLevel={micLevel}
@@ -736,10 +739,10 @@ export function LiveSessionView() {
                 <motion.div
                   drag
                   dragConstraints={panelContainerRef}
-                  dragElastic={0.12}
+                  dragElastic={0.1}
                   dragMomentum={false}
-                  whileDrag={{ scale: 1.05 }}
-                  className="absolute bottom-4 right-4 z-30 w-44 sm:w-56 aspect-video rounded-2xl overflow-hidden border border-white/20 bg-black/85 shadow-2xl cursor-grab active:cursor-grabbing backdrop-blur-md select-none group"
+                  whileDrag={{ scale: 1.02 }}
+                  className="absolute bottom-2 right-2 z-30 w-44 sm:w-52 aspect-video rounded-md overflow-hidden border border-zinc-700 bg-zinc-950/95 shadow-xl cursor-grab active:cursor-grabbing backdrop-blur-md select-none group"
                 >
                   <video
                     ref={videoElementRef}
@@ -747,115 +750,120 @@ export function LiveSessionView() {
                     muted
                     className="w-full h-full object-cover -scale-x-100 pointer-events-none"
                   />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/75 text-[10px] text-emerald-300 font-mono flex items-center gap-1.5 border border-white/10 select-none pointer-events-none">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Candidate Feed
+                  <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[9px] text-emerald-300 font-mono flex items-center gap-1 border border-white/10 select-none pointer-events-none">
+                    <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                    1 FPS Vision
                   </div>
-                  <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/75 text-[10px] text-slate-300 font-mono flex items-center gap-1 border border-white/10 opacity-70 group-hover:opacity-100 transition-opacity select-none pointer-events-none">
-                    <Move className="h-2.5 w-2.5" />
-                    Drag
+                  <div className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded bg-black/80 text-[9px] text-zinc-400 font-mono flex items-center gap-0.5 border border-white/10 opacity-60 group-hover:opacity-100 transition-opacity select-none pointer-events-none">
+                    <Move className="h-2 w-2" />
+                    Move
                   </div>
                 </motion.div>
               )}
             </div>
 
-            {/* Action Bar */}
-            <div className="flex items-center gap-3 flex-wrap justify-center w-full pt-2">
-              <Button
-                size="lg"
-                variant={isMuted ? 'secondary' : 'outline'}
-                onClick={handleToggleMute}
-                className={`h-11 px-4 text-sm ${
-                  isMuted
-                    ? 'bg-amber-500/20 border-amber-400/40 text-amber-100 hover:bg-amber-500/30'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
-                aria-pressed={isMuted}
-              >
-                {isMuted ? (
-                  <>
-                    <MicOff className="h-4 w-4 mr-1.5" />
-                    Unmute
-                  </>
-                ) : (
-                  <>
-                    <Mic className="h-4 w-4 mr-1.5 text-indigo-300" />
-                    Mute Mic
-                  </>
-                )}
-              </Button>
-
-              {config?.inputMode === 'video_audio' && (
+            {/* Bottom Controls Dock */}
+            <div className="flex items-center gap-2.5 flex-wrap justify-between w-full pt-3 border-t border-zinc-800/80">
+              <div className="flex items-center gap-2">
                 <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={toggleCamera}
+                  size="sm"
+                  variant={isMuted ? 'secondary' : 'outline'}
+                  onClick={handleToggleMute}
                   className={cn(
-                    'h-11 px-4 text-sm bg-white/5 border-white/10 hover:bg-white/10',
-                    isVideoEnabled && 'border-emerald-400/30 text-emerald-200',
+                    'h-8 px-3 text-xs font-medium border-zinc-800',
+                    isMuted
+                      ? 'bg-amber-500/15 border-amber-500/30 text-amber-200 hover:bg-amber-500/25'
+                      : 'bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300',
                   )}
+                  aria-pressed={isMuted}
                 >
-                  {isVideoEnabled ? (
+                  {isMuted ? (
                     <>
-                      <Video className="h-4 w-4 mr-1.5 text-emerald-400" />
-                      Camera On
+                      <MicOff className="h-3.5 w-3.5 mr-1 text-amber-400" />
+                      Unmute Mic
                     </>
                   ) : (
                     <>
-                      <VideoOff className="h-4 w-4 mr-1.5 text-red-400" />
-                      Camera Off
+                      <Mic className="h-3.5 w-3.5 mr-1 text-zinc-400" />
+                      Mute Mic
                     </>
                   )}
                 </Button>
-              )}
 
-              {connectionState === 'failed' && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleRetry}
-                  className="h-11 px-4 text-sm bg-white/5 border-white/10 hover:bg-white/10"
-                >
-                  <RefreshCw className="h-4 w-4 mr-1.5" />
-                  Retry Connection
-                </Button>
-              )}
+                {config?.inputMode === 'video_audio' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={toggleCamera}
+                    className={cn(
+                      'h-8 px-3 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300',
+                      isVideoEnabled && 'border-emerald-500/30 text-emerald-300',
+                    )}
+                  >
+                    {isVideoEnabled ? (
+                      <>
+                        <Video className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                        Camera Active
+                      </>
+                    ) : (
+                      <>
+                        <VideoOff className="h-3.5 w-3.5 mr-1 text-red-400" />
+                        Camera Muted
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {connectionState === 'failed' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRetry}
+                    className="h-8 px-3 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                    Retry
+                  </Button>
+                )}
+              </div>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
-                    size="lg"
+                    size="sm"
                     variant="destructive"
-                    className="h-11 px-5 bg-red-600/90 hover:bg-red-600 font-semibold"
+                    className="h-8 px-3 text-xs font-medium bg-red-600/90 hover:bg-red-600 text-white"
                   >
-                    <PhoneOff className="h-4 w-4 mr-2" />
-                    End Interview
+                    <PhoneOff className="h-3.5 w-3.5 mr-1.5" />
+                    End & Score
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-zinc-900 border-white/10 text-slate-100">
+                <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Conclude this Board Interview?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-slate-400">
-                      This will end the live exchange. The board will evaluate your full spoken
-                      answers, vocal fluency, and non-verbal delivery to generate your official scorecard.
+                    <AlertDialogTitle className="text-base font-bold text-zinc-100">
+                      Conclude Board Interview?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-xs text-zinc-400">
+                      This will conclude the live dialogue. The board will evaluate your full spoken answers,
+                      analytical depth, vocal fluency, and non-verbal cues to generate your official scorecard.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10">
-                      Keep Interviewing
+                    <AlertDialogCancel className="h-8 text-xs border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300">
+                      Resume Interview
                     </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleManualEnd}
                       disabled={isEvaluating}
-                      className="bg-red-600 hover:bg-red-500 text-white"
+                      className="h-8 text-xs bg-red-600 hover:bg-red-500 text-white font-medium"
                     >
                       {isEvaluating ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Evaluating...
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                          Evaluating…
                         </>
                       ) : (
-                        'End & Generate Scorecard'
+                        'Conclude & Generate Scorecard'
                       )}
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -864,33 +872,28 @@ export function LiveSessionView() {
             </div>
           </motion.div>
 
-          {/* Right panel: Live Transcript */}
+          {/* Right Panel: High-density Live Transcript (5 cols) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="lg:col-span-5 h-[480px] lg:h-auto flex flex-col"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
+            className="lg:col-span-5 h-[460px] lg:h-auto flex flex-col"
           >
             <LiveTranscript transcript={transcript} />
           </motion.div>
         </div>
       </div>
 
-      {/* Evaluating overlay */}
+      {/* Evaluating Modal Overlay */}
       {isEvaluating && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 text-center px-4">
-          <div className="relative">
-            <div className="h-16 w-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-            <Sparkles className="h-6 w-6 text-indigo-400 absolute inset-0 m-auto animate-pulse" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-white mb-1">
-              Board Deliberating & Generating Appraisal
-            </h3>
-            <p className="text-sm text-slate-400 max-w-md">
-              Evaluating spoken transcript, analytical depth, vocal fluency, and non-verbal delivery cues...
-            </p>
-          </div>
+        <div className="fixed inset-0 z-50 bg-zinc-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-3 text-center px-4">
+          <div className="h-10 w-10 rounded-full border-2 border-zinc-700 border-t-indigo-400 animate-spin mb-1" />
+          <h3 className="text-base font-bold text-zinc-100">
+            Board Deliberation in Progress
+          </h3>
+          <p className="text-xs text-zinc-400 max-w-sm font-mono">
+            Evaluating spoken transcript, analytical depth, vocal fluency, and non-verbal cues…
+          </p>
         </div>
       )}
 
