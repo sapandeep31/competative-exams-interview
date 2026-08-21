@@ -31,9 +31,11 @@ import { LiveTranscript } from '@/components/interview/LiveTranscript';
 import { AudioRecorder } from '@/core/audio/AudioRecorder';
 import { AudioPlayer } from '@/core/audio/AudioPlayer';
 import { GeminiLiveClient } from '@/core/gemini/gemini-live-client';
+import { BOARD_OFFICERS } from '@/core/gemini/live-config';
 import { handleEndInterviewToolCall } from '@/core/gemini/tools';
 import { useInterviewStore } from '@/core/state/useInterviewStore';
 import type { Feedback } from '@/core/state/types';
+import { cn } from '@/lib/utils';
 
 const BARGE_IN_RMS_THRESHOLD = 0.04;
 
@@ -395,6 +397,7 @@ export function LiveSessionView() {
     if (!config) return null;
     const exam = config.examCategory || config.role;
     const mode = config.simulationMode || config.level;
+    const officer = BOARD_OFFICERS[exam];
     return (
       <div className="flex items-center gap-2 flex-wrap">
         <Badge
@@ -404,6 +407,15 @@ export function LiveSessionView() {
           <User className="h-3 w-3" />
           {config.candidateName}
         </Badge>
+        {officer && (
+          <Badge
+            variant="secondary"
+            className="bg-emerald-500/15 border border-emerald-400/30 text-emerald-100 gap-1 font-medium"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            {officer.name}
+          </Badge>
+        )}
         <Badge
           variant="secondary"
           className="bg-amber-500/15 border border-amber-400/30 text-amber-100 gap-1 font-medium"
@@ -469,21 +481,39 @@ export function LiveSessionView() {
             className="glass-panel rounded-3xl p-6 sm:p-10 flex flex-col items-center justify-center gap-8 min-h-[480px]"
           >
             <div className="text-center">
-              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                {audioState === 'idle' && 'Warming up…'}
-                {audioState === 'listening' && 'Listening…'}
-                {audioState === 'thinking' && 'Thinking…'}
-                {audioState === 'speaking' && 'Speaking…'}
-              </h2>
-              <p className="text-xs text-slate-500 mt-1.5">
-                {connectionState === 'failed'
-                  ? 'Connection lost — retry below.'
-                  : audioState === 'listening'
-                    ? 'Speak naturally; the AI hears you.'
-                    : audioState === 'speaking'
-                      ? 'AI is responding. Speak to interrupt.'
-                      : 'Establishing real-time channel.'}
-              </p>
+              {config && BOARD_OFFICERS[config.examCategory || config.role] && (
+                <div className="mb-2">
+                  <span className="text-xs uppercase tracking-widest font-semibold text-indigo-400">
+                    Active Board Interviewer
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                    {BOARD_OFFICERS[config.examCategory || config.role].name}
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto line-clamp-1">
+                    {BOARD_OFFICERS[config.examCategory || config.role].designation}
+                  </p>
+                </div>
+              )}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full',
+                    audioState === 'speaking'
+                      ? 'bg-violet-400 animate-pulse'
+                      : audioState === 'listening'
+                        ? 'bg-emerald-400 animate-pulse'
+                        : audioState === 'thinking'
+                          ? 'bg-amber-400 animate-pulse'
+                          : 'bg-slate-500',
+                  )}
+                />
+                <span className="font-medium capitalize">
+                  {audioState === 'idle' && 'Channel Ready'}
+                  {audioState === 'listening' && 'Listening to your response…'}
+                  {audioState === 'thinking' && 'Board deliberating…'}
+                  {audioState === 'speaking' && 'Board questioning…'}
+                </span>
+              </div>
             </div>
 
             <AudioBallVisualizer

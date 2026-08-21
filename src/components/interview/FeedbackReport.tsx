@@ -37,6 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { BOARD_OFFICERS } from '@/core/gemini/live-config';
 import { useInterviewStore } from '@/core/state/useInterviewStore';
 import type { ExamVerdict, Feedback } from '@/core/state/types';
 import { cn } from '@/lib/utils';
@@ -445,12 +446,31 @@ export function FeedbackReport() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10"
             >
-              <h2 className="text-lg font-bold text-white mb-3">
-                Board Narrative & Detailed Performance Appraisal
-              </h2>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h2 className="text-lg font-bold text-white">
+                  Board Narrative & Detailed Performance Appraisal
+                </h2>
+                {config && BOARD_OFFICERS[config.examCategory || config.role] && (
+                  <Badge variant="outline" className="bg-white/5 border-white/10 text-indigo-300 text-xs">
+                    Evaluated by {BOARD_OFFICERS[config.examCategory || config.role].name}
+                  </Badge>
+                )}
+              </div>
               <div className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">
                 {feedback.detailed_summary}
               </div>
+              {config && BOARD_OFFICERS[config.examCategory || config.role] && (
+                <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
+                  <div>
+                    <span className="font-semibold text-slate-200">Presiding Officer: </span>
+                    {BOARD_OFFICERS[config.examCategory || config.role].name} ({BOARD_OFFICERS[config.examCategory || config.role].designation})
+                  </div>
+                  <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-mono">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Official Board Record
+                  </span>
+                </div>
+              )}
             </motion.div>
 
             {/* Transcript Accordion */}

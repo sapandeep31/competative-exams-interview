@@ -41,7 +41,9 @@ interface ExamCardConfig {
   id: ExamCategory;
   title: string;
   shortDesc: string;
-  boardPersona: string;
+  officerName: string;
+  officerDesignation: string;
+  officerLore: string;
   icon: typeof Landmark;
   color: string;
   bgGlow: string;
@@ -53,68 +55,80 @@ const EXAM_CARDS: ExamCardConfig[] = [
   {
     id: 'UPSC Civil Services (IAS/IPS)',
     title: 'UPSC Civil Services',
-    shortDesc: 'IAS / IPS / IFS Personality Test & Board Interview',
-    boardPersona: 'Honorable Board Chairman & Distinguished Panelists',
+    shortDesc: 'IAS / IPS / IFS Personality Test',
+    officerName: 'Dr. Arvind K. Raghavan, IAS (Retd.)',
+    officerDesignation: 'Former Union Home Secretary & UPSC Board Chairman',
+    officerLore: '38 years of civil administration across border districts and Cabinet Secretariat.',
     icon: Landmark,
     color: 'from-amber-500 to-orange-500',
     bgGlow: 'hover:border-amber-500/50 hover:bg-amber-500/5',
     borderActive: 'border-amber-400 bg-amber-500/10 shadow-amber-500/20',
-    focusTags: ['DAF Cross-Examination', 'Constitutional Ethics', 'Policy Debates'],
+    focusTags: ['DAF Cross-Exam', 'Constitutional Ethics', 'Policy Debates'],
   },
   {
     id: 'SSB Defence Interview (Army/Navy/Air Force)',
     title: 'SSB Defence Interview',
-    shortDesc: 'Officer Cadre Selection (Army / Navy / Air Force / NDA / CDS / AFCAT)',
-    boardPersona: 'Senior Military Interviewing Officer (IO)',
+    shortDesc: 'Officer Cadre Selection (NDA/CDS/AFCAT)',
+    officerName: 'Brigadier Ranvijay Singh Rathore, SM',
+    officerDesignation: 'Senior Military Interviewing Officer (IO), SSB',
+    officerLore: '32 years in Infantry & Para SF. Veteran of Siachen & counter-insurgency ops.',
     icon: Shield,
     color: 'from-emerald-500 to-teal-500',
     bgGlow: 'hover:border-emerald-500/50 hover:bg-emerald-500/5',
     borderActive: 'border-emerald-400 bg-emerald-500/10 shadow-emerald-500/20',
-    focusTags: ['15 OLQs Assessment', 'Rapid CIQ Series', 'Situational Crisis Tests'],
+    focusTags: ['15 OLQs Assessment', 'Rapid CIQ Series', 'Crisis Reactions'],
   },
   {
     id: 'RBI Grade B & Banking PO',
     title: 'RBI Grade B & Banking',
-    shortDesc: 'Reserve Bank of India & Premier PSU Banking Board (SBI/IBPS PO)',
-    boardPersona: 'Executive Board Member & Senior Monetary Economists',
+    shortDesc: 'Reserve Bank of India & SBI/IBPS PO',
+    officerName: 'Dr. Meenakshi Sundaram',
+    officerDesignation: 'Deputy Governor, Reserve Bank of India',
+    officerLore: 'PhD Macroeconomics (LSE/DSE). Architect of inflation targeting & liquidity frameworks.',
     icon: Coins,
     color: 'from-blue-500 to-cyan-500',
     bgGlow: 'hover:border-blue-500/50 hover:bg-blue-500/5',
     borderActive: 'border-blue-400 bg-blue-500/10 shadow-blue-500/20',
-    focusTags: ['Monetary Policy & Repo', 'Macroeconomic Health', 'Fintech / Banking NPAs'],
+    focusTags: ['Monetary Policy & Repo', 'Macroeconomic Health', 'NPAs & FinTech'],
   },
   {
     id: 'CAT & IIMs MBA PI',
     title: 'CAT & IIMs MBA PI',
-    shortDesc: 'Premier B-School Personal Interview (IIM A/B/C, FMS, XLRI)',
-    boardPersona: 'Senior IIM Faculty & Business Admissions Panel',
+    shortDesc: 'Premier B-School Personal Interview',
+    officerName: 'Prof. Debashis Roy',
+    officerDesignation: 'Professor of Strategy & Chair of Admissions, IIM Ahmedabad',
+    officerLore: 'Corporate advisor to Global 500s. Expert in business models & strategy.',
     icon: GraduationCap,
     color: 'from-purple-500 to-violet-500',
     bgGlow: 'hover:border-purple-500/50 hover:bg-purple-500/5',
     borderActive: 'border-purple-400 bg-purple-500/10 shadow-purple-500/20',
-    focusTags: ['Academic Deep Dive', 'Business Acumen', 'Goal Clarity & Why MBA'],
+    focusTags: ['Academics & Resume', 'Business Acumen', 'Goal Clarity'],
   },
   {
     id: 'State PSC (Civil Services)',
     title: 'State PSC Exams',
-    shortDesc: 'Provincial Civil Services (UPPSC, BPSC, MPSC, KPSC, WBPSC)',
-    boardPersona: 'State Public Service Commission Board Panel',
+    shortDesc: 'Provincial Civil Services (UPPSC/BPSC/MPSC)',
+    officerName: 'Shri Birendra Nath Shukla',
+    officerDesignation: 'Former Addl. Chief Secretary & State PSC Chairman',
+    officerLore: '34 years managing district administration, rural agrarian crisis & welfare budgets.',
     icon: Building2,
     color: 'from-rose-500 to-pink-500',
     bgGlow: 'hover:border-rose-500/50 hover:bg-rose-500/5',
     borderActive: 'border-rose-400 bg-rose-500/10 shadow-rose-500/20',
-    focusTags: ['Grassroots Governance', 'State Budget & Schemes', 'Rural Administration'],
+    focusTags: ['Grassroots Governance', 'State Schemes', 'Rural Administration'],
   },
   {
     id: 'Judiciary Services (PCS-J)',
     title: 'Judiciary Services (PCS-J)',
-    shortDesc: 'Judicial Magistrate & Civil Judge Examination Bench',
-    boardPersona: 'Senior High Court Judge & Judicial Examination Bench',
+    shortDesc: 'Judicial Magistrate & Civil Judge Exam',
+    officerName: 'Hon\'ble Justice (Retd.) S. M. Pathak',
+    officerDesignation: 'Former High Court Senior Judge & Judicial Board Chair',
+    officerLore: '36 years on the bench deciding landmark constitutional & criminal cases.',
     icon: Scale,
     color: 'from-indigo-500 to-blue-600',
     bgGlow: 'hover:border-indigo-500/50 hover:bg-indigo-500/5',
     borderActive: 'border-indigo-400 bg-indigo-500/10 shadow-indigo-500/20',
-    focusTags: ['Constitutional Law', 'BNS/BNSS & Evidence Act', 'Judicial Temperament'],
+    focusTags: ['Constitutional Law', 'BNS/BNSS & Evidence', 'Judicial Temperament'],
   },
 ];
 
@@ -411,12 +425,20 @@ export function InterviewSetup() {
                         </p>
                       </div>
 
-                      <div className="mt-3 pt-3 border-t border-white/5">
-                        <div className="text-[11px] font-medium text-indigo-300 mb-2 flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                          {exam.boardPersona}
+                      <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+                          <span className="text-xs font-bold text-slate-100 truncate">
+                            {exam.officerName}
+                          </span>
                         </div>
-                        <div className="flex flex-wrap gap-1">
+                        <p className="text-[11px] text-indigo-300 font-medium leading-tight">
+                          {exam.officerDesignation}
+                        </p>
+                        <p className="text-[10px] text-slate-400 leading-snug line-clamp-2">
+                          {exam.officerLore}
+                        </p>
+                        <div className="flex flex-wrap gap-1 pt-1">
                           {exam.focusTags.map((tag) => (
                             <span
                               key={tag}
