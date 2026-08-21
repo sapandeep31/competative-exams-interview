@@ -79,7 +79,7 @@ ${visualInstructions}
 
     const prompt = `Spoken Interview Transcript:\n${formattedTranscript}\n\nPlease generate the comprehensive evaluation JSON now.`;
 
-    const modelName = 'gemini-2.5-flash';
+    const modelName = 'gemini-2.0-flash';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
     const response = await fetch(apiUrl, {
