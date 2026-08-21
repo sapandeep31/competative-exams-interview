@@ -170,6 +170,11 @@ export class GeminiLiveClient {
     const sc = msg.serverContent;
     if (!sc) return;
 
+    if (sc.interrupted) {
+      this.emit('interrupted');
+      return;
+    }
+
     if (sc.inputTranscription?.text) {
       this.emit('inputTranscript', sc.inputTranscription.text);
     }
@@ -184,10 +189,6 @@ export class GeminiLiveClient {
           this.emit('audio', inline.data);
         }
       }
-    }
-
-    if (sc.interrupted) {
-      this.emit('interrupted');
     }
     // turnComplete is informational; the player's onPlaybackEnd handles state transitions.
   }

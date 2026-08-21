@@ -352,24 +352,23 @@ export function LiveSessionView() {
     });
 
     client.on('audio', (b64) => {
-      // Discard trailing packets from an interrupted turn
-      if (isInterruptedRef.current) return;
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = null;
       }
+      isInterruptedRef.current = false;
       playerRef.current?.enqueueChunk(b64);
       setAudioState('speaking');
     });
 
     client.on('inputTranscript', (text) => {
+      isInterruptedRef.current = false;
       inputBufferRef.current += ' ' + text;
       flushInputBuffer(false);
       setAudioState('listening');
     });
 
     client.on('outputTranscript', (text) => {
-      // New output turn started from the board, clear interrupted state
       isInterruptedRef.current = false;
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
