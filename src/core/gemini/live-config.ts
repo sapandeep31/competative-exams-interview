@@ -135,16 +135,20 @@ export function buildSystemInstruction(
 
   const bgInfo = background
     ? [
-      background.education ? `Educational Background: ${background.education}` : '',
-      background.nativeState ? `Native State / Region: ${background.nativeState}` : '',
+      background.education ? `Educational Qualifications & Degree: ${background.education}` : '',
+      background.nativeState ? `Native State, District & Hometown: ${background.nativeState}` : '',
       background.optionalOrSpecialization
-        ? `Optional Subject / Specialization: ${background.optionalOrSpecialization}`
+        ? `Optional Subject / Domain Specialization: ${background.optionalOrSpecialization}`
         : '',
-      background.hobbies ? `Hobbies / Extra-curriculars: ${background.hobbies}` : '',
+      background.sportsAndGames ? `Sports & Games (Level of Participation): ${background.sportsAndGames}` : '',
+      background.leadershipRoles ? `Positions of Responsibility & Leadership: ${background.leadershipRoles}` : '',
+      background.nccOrScouts ? `NCC Training / Extra-curricular Activities: ${background.nccOrScouts}` : '',
+      background.hobbies ? `Hobbies & Personal Interests: ${background.hobbies}` : '',
+      background.workExperienceOrAttempts ? `Work Experience & Prior Attempts: ${background.workExperienceOrAttempts}` : '',
     ]
       .filter(Boolean)
       .join('\n')
-    : 'No detailed background provided.';
+    : 'No detailed DAF/PIQ background provided.';
 
   const isVideo = inputMode === 'video_audio';
 

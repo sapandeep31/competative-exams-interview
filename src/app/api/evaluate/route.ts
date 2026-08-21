@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const bg = config?.background;
 
     const bgStr = bg
-      ? `Background: [Education: ${bg.education || 'N/A'}, State: ${bg.nativeState || 'N/A'}, Specialization: ${bg.optionalOrSpecialization || 'N/A'}, Hobbies: ${bg.hobbies || 'N/A'}]`
+      ? `DAF / PIQ Profile: [Education: ${bg.education || 'N/A'}, Domicile/State: ${bg.nativeState || 'N/A'}, Specialization/Optional: ${bg.optionalOrSpecialization || 'N/A'}, Sports/Games: ${bg.sportsAndGames || 'N/A'}, Leadership Roles: ${bg.leadershipRoles || 'N/A'}, NCC/Activities: ${bg.nccOrScouts || 'N/A'}, Hobbies: ${bg.hobbies || 'N/A'}, Work Experience/Attempts: ${bg.workExperienceOrAttempts || 'N/A'}]`
       : '';
 
     // Format transcript text

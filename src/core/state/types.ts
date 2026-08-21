@@ -23,10 +23,14 @@ export type Role = ExamCategory;
 export type ExperienceLevel = SimulationMode;
 
 export interface CandidateBackground {
-  education?: string;
-  nativeState?: string;
-  optionalOrSpecialization?: string;
-  hobbies?: string;
+  education?: string; // Degree, college, marks & medium
+  nativeState?: string; // Native state, district & hometown
+  optionalOrSpecialization?: string; // Optional subject / Stream specialization
+  sportsAndGames?: string; // Sports played & level of representation (PIQ Q10)
+  leadershipRoles?: string; // Positions of responsibility held in school/college/work (PIQ Q11)
+  nccOrScouts?: string; // NCC training, wing, certificate (PIQ Q9)
+  hobbies?: string; // Hobbies and extra-curricular activities (DAF / PIQ Q11)
+  workExperienceOrAttempts?: string; // Prior job experience & previous exam/SSB attempts
 }
 
 export interface InterviewConfig {
