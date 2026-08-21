@@ -40,10 +40,22 @@ interface InterviewState {
   toggleMute: () => void;
   setMuted: (muted: boolean) => void;
   addTranscript: (role: TranscriptEntry['role'], text: string) => void;
+  appendTranscript: (role: TranscriptEntry['role'], text: string) => void;
   setFeedback: (fb: Feedback) => void;
   setError: (err: string | null) => void;
   tick: () => void;
   reset: () => void;
+}
+
+function combineTranscriptText(existing: string, incoming: string): string {
+  const ex = existing.trim();
+  const inc = incoming.trim();
+  if (!ex) return inc;
+  if (!inc) return ex;
+  if (/^[.,!?;:]/.test(inc)) {
+    return `${ex}${inc}`.replace(/\s+/g, ' ');
+  }
+  return `${ex} ${inc}`.replace(/\s+/g, ' ').replace(/\s+([.,!?;:])/g, '$1');
 }
 
 export const useInterviewStore = create<InterviewState>((set) => ({
@@ -70,17 +82,51 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   setMuted: (muted) => set({ isMuted: muted }),
 
   addTranscript: (role, text) =>
-    set((s) => ({
-      transcript: [
-        ...s.transcript,
-        {
-          id: nextTranscriptId(),
-          role,
-          text,
-          timestamp: Date.now(),
-        },
-      ],
-    })),
+    set((s) => {
+      const clean = text.trim();
+      if (!clean) return s;
+      return {
+        transcript: [
+          ...s.transcript,
+          {
+            id: nextTranscriptId(),
+            role,
+            text: clean,
+            timestamp: Date.now(),
+          },
+        ],
+      };
+    }),
+
+  appendTranscript: (role, text) =>
+    set((s) => {
+      const clean = text.trim();
+      if (!clean) return s;
+      const last = s.transcript[s.transcript.length - 1];
+      if (last && last.role === role) {
+        const updated = combineTranscriptText(last.text, clean);
+        return {
+          transcript: [
+            ...s.transcript.slice(0, -1),
+            {
+              ...last,
+              text: updated,
+            },
+          ],
+        };
+      }
+      return {
+        transcript: [
+          ...s.transcript,
+          {
+            id: nextTranscriptId(),
+            role,
+            text: clean,
+            timestamp: Date.now(),
+          },
+        ],
+      };
+    }),
 
   setFeedback: (feedback) => set({ feedback }),
   setError: (error) => set({ error }),

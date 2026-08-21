@@ -32,11 +32,11 @@ export function LiveTranscript({ transcript, className }: LiveTranscriptProps) {
   return (
     <div
       className={cn(
-        'surface-panel rounded-lg p-4 flex flex-col h-full border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm',
+        'surface-panel rounded-lg p-4 flex flex-col h-full min-h-0 border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm overflow-hidden',
         className,
       )}
     >
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800/80">
+      <div className="shrink-0 flex items-center justify-between pb-3 mb-3 border-b border-zinc-800/80">
         <div className="flex items-center gap-2">
           <MessageSquareText className="h-4 w-4 text-zinc-400" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
@@ -50,7 +50,7 @@ export function LiveTranscript({ transcript, className }: LiveTranscriptProps) {
 
       <div
         ref={viewportRef}
-        className="flex-1 overflow-y-auto custom-scroll pr-1.5 space-y-3"
+        className="flex-1 min-h-0 overflow-y-auto custom-scroll pr-1.5 space-y-3"
       >
         <AnimatePresence initial={false}>
           {transcript.length === 0 ? (

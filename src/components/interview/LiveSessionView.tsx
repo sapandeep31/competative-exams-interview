@@ -13,6 +13,7 @@ import {
   RefreshCw,
   User,
   BadgeCheck,
+  ShieldCheck,
   Loader2,
   Camera,
   Sparkles,
@@ -66,7 +67,7 @@ export function LiveSessionView() {
   const setMicLevel = useInterviewStore((s) => s.setMicLevel);
   const setAiLevel = useInterviewStore((s) => s.setAiLevel);
   const toggleMute = useInterviewStore((s) => s.toggleMute);
-  const addTranscript = useInterviewStore((s) => s.addTranscript);
+  const appendTranscript = useInterviewStore((s) => s.appendTranscript);
   const setFeedback = useInterviewStore((s) => s.setFeedback);
   const setError = useInterviewStore((s) => s.setError);
   const tick = useInterviewStore((s) => s.tick);
@@ -93,11 +94,6 @@ export function LiveSessionView() {
   const videoIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Accumulate streaming transcript fragments.
-  const inputBufferRef = useRef<string>('');
-  const outputBufferRef = useRef<string>('');
-  const lastInputFlushRef = useRef<number>(0);
-  const lastOutputFlushRef = useRef<number>(0);
   const endedRef = useRef<boolean>(false);
 
   // Toggle microphone muting with instant AudioRecorder state synchronization
@@ -114,39 +110,10 @@ export function LiveSessionView() {
     }
   }, [isMuted, setMicLevel, toggleMute]);
 
-  // --- Helpers ---
-  const flushInputBuffer = useCallback(
-    (force = false) => {
-      const text = inputBufferRef.current.trim();
-      if (!text) return;
-      const now = Date.now();
-      if (!force && now - lastInputFlushRef.current < 600) return;
-      lastInputFlushRef.current = now;
-      inputBufferRef.current = '';
-      addTranscript('user', text);
-    },
-    [addTranscript],
-  );
-
-  const flushOutputBuffer = useCallback(
-    (force = false) => {
-      const text = outputBufferRef.current.trim();
-      if (!text) return;
-      const now = Date.now();
-      if (!force && now - lastOutputFlushRef.current < 400) return;
-      lastOutputFlushRef.current = now;
-      outputBufferRef.current = '';
-      addTranscript('interviewer', text);
-    },
-    [addTranscript],
-  );
-
   const endInterview = useCallback(
     (feedback: Feedback) => {
       if (endedRef.current) return;
       endedRef.current = true;
-      flushInputBuffer(true);
-      flushOutputBuffer(true);
 
       // Stop video streaming & tracks
       if (videoIntervalRef.current) {
@@ -161,7 +128,7 @@ export function LiveSessionView() {
       setFeedback(feedback);
       setPhase('feedback');
     },
-    [flushInputBuffer, flushOutputBuffer, setFeedback, setPhase],
+    [setFeedback, setPhase],
   );
 
   const handleToolCall = useCallback(
@@ -391,8 +358,7 @@ export function LiveSessionView() {
 
     client.on('inputTranscript', (text) => {
       isInterruptedRef.current = false;
-      inputBufferRef.current += ' ' + text;
-      flushInputBuffer(false);
+      appendTranscript('user', text);
       setAudioState('listening');
     });
 
@@ -402,8 +368,7 @@ export function LiveSessionView() {
         clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = null;
       }
-      outputBufferRef.current += ' ' + text;
-      flushOutputBuffer(false);
+      appendTranscript('interviewer', text);
       setAudioState('speaking');
     });
 
@@ -434,10 +399,8 @@ export function LiveSessionView() {
     client.connect();
     clientRef.current = client;
   }, [
+    appendTranscript,
     config,
-    endInterview,
-    flushInputBuffer,
-    flushOutputBuffer,
     handleToolCall,
     phase,
     setAiLevel,
@@ -563,7 +526,7 @@ export function LiveSessionView() {
     } finally {
       setIsEvaluating(false);
     }
-  }, [config, endInterview, flushInputBuffer, flushOutputBuffer, teardown]);
+  }, [config, endInterview, teardown]);
 
   // Connect on mount
   useEffect(() => {
@@ -603,8 +566,8 @@ export function LiveSessionView() {
           variant="secondary"
           className="bg-zinc-900 border border-zinc-800 text-zinc-300 gap-1 font-mono text-[11px] px-2 py-0.5"
         >
-          <User className="h-3 w-3 text-zinc-400" />
-          {config.candidateName}
+          <ShieldCheck className="h-3 w-3 text-indigo-400" />
+          {officer?.exam || exam.toUpperCase()}
         </Badge>
         {officer && (
           <Badge
@@ -641,9 +604,9 @@ export function LiveSessionView() {
   const orbSize = typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 280;
 
   return (
-    <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col antialiased">
+    <main className="h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col antialiased overflow-hidden">
       {/* High-density Utility Header */}
-      <header className="h-12 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between gap-4">
+      <header className="h-12 shrink-0 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span
@@ -673,19 +636,19 @@ export function LiveSessionView() {
         </div>
       </header>
 
-      {/* Main Workspace Layout */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-stretch">
+      {/* Main Workspace Layout (constrained height, no page-level stretching) */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex flex-col min-h-0 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 items-stretch overflow-hidden">
           {/* Left / Center Chamber: Visualizer, HUD & Controls (7 cols) */}
           <motion.div
             ref={panelContainerRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-            className="lg:col-span-7 surface-panel rounded-lg border border-zinc-800/80 p-5 bg-zinc-900/40 flex flex-col items-center justify-between gap-5 min-h-[460px] relative overflow-hidden"
+            className="lg:col-span-7 surface-panel rounded-lg border border-zinc-800/80 p-4 sm:p-5 bg-zinc-900/40 flex flex-col items-center justify-between gap-3 min-h-0 h-full relative overflow-hidden"
           >
             {/* Header info */}
-            <div className="w-full flex items-center justify-between pb-3 border-b border-zinc-800/80 flex-wrap gap-2">
+            <div className="w-full shrink-0 flex items-center justify-between pb-3 border-b border-zinc-800/80 flex-wrap gap-2">
               {config && BOARD_OFFICERS[config.examCategory || config.role] ? (
                 <div>
                   <div className="text-[10px] font-mono uppercase tracking-widest text-indigo-400">
@@ -726,7 +689,7 @@ export function LiveSessionView() {
             </div>
 
             {/* Visualizer & Picture-in-Picture Video */}
-            <div className="relative w-full flex items-center justify-center my-auto py-2">
+            <div className="relative w-full flex-1 min-h-0 flex items-center justify-center my-auto py-1">
               <AudioBallVisualizer
                 state={audioState}
                 micLevel={micLevel}
@@ -763,7 +726,7 @@ export function LiveSessionView() {
             </div>
 
             {/* Bottom Controls Dock */}
-            <div className="flex items-center gap-2.5 flex-wrap justify-between w-full pt-3 border-t border-zinc-800/80">
+            <div className="w-full shrink-0 flex items-center gap-2.5 flex-wrap justify-between pt-3 border-t border-zinc-800/80">
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
@@ -872,14 +835,14 @@ export function LiveSessionView() {
             </div>
           </motion.div>
 
-          {/* Right Panel: High-density Live Transcript (5 cols) */}
+          {/* Right Panel: High-density Live Transcript (5 cols) - Constrained strictly scrollable window */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.05 }}
-            className="lg:col-span-5 h-[460px] lg:h-auto flex flex-col"
+            className="lg:col-span-5 h-[340px] lg:h-full min-h-0 flex flex-col overflow-hidden"
           >
-            <LiveTranscript transcript={transcript} />
+            <LiveTranscript transcript={transcript} className="h-full min-h-0 flex flex-col" />
           </motion.div>
         </div>
       </div>
