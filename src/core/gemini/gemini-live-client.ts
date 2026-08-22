@@ -192,6 +192,9 @@ export class GeminiLiveClient {
         if (inline?.data) {
           this.emit('audio', inline.data);
         }
+        if (part.text && !sc.outputTranscription?.text) {
+          this.emit('outputTranscript', part.text);
+        }
       }
     }
     // turnComplete is informational; the player's onPlaybackEnd handles state transitions.

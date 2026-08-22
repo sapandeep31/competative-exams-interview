@@ -73,7 +73,15 @@ export const useInterviewStore = create<InterviewState>((set) => ({
 
   error: null,
 
-  setConfig: (config) => set({ config }),
+  setConfig: (config) =>
+    set({
+      config,
+      transcript: [],
+      feedback: null,
+      elapsedSeconds: 0,
+      audioState: 'idle',
+      error: null,
+    }),
   setPhase: (phase) => set({ phase }),
   setAudioState: (audioState) => set({ audioState }),
   setMicLevel: (micLevel) => set({ micLevel }),

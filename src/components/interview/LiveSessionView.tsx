@@ -110,25 +110,44 @@ export function LiveSessionView() {
     }
   }, [isMuted, setMicLevel, toggleMute]);
 
+  // Interruption and silence tracking
+  const isInterruptedRef = useRef<boolean>(false);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // --- Teardown engine ---
+  const teardown = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+    if (videoIntervalRef.current) {
+      clearInterval(videoIntervalRef.current);
+      videoIntervalRef.current = null;
+    }
+    if (videoStreamRef.current) {
+      videoStreamRef.current.getTracks().forEach((t) => t.stop());
+      videoStreamRef.current = null;
+    }
+    recorderRef.current?.stop();
+    recorderRef.current = null;
+    playerRef.current?.dispose();
+    playerRef.current = null;
+    clientRef.current?.close();
+    clientRef.current = null;
+  }, []);
+
   const endInterview = useCallback(
     (feedback: Feedback) => {
       if (endedRef.current) return;
       endedRef.current = true;
 
-      // Stop video streaming & tracks
-      if (videoIntervalRef.current) {
-        clearInterval(videoIntervalRef.current);
-        videoIntervalRef.current = null;
-      }
-      if (videoStreamRef.current) {
-        videoStreamRef.current.getTracks().forEach((t) => t.stop());
-        videoStreamRef.current = null;
-      }
+      // Full synchronous teardown of mic, player, video, and WebSocket
+      teardown();
 
       setFeedback(feedback);
       setPhase('feedback');
     },
-    [setFeedback, setPhase],
+    [setFeedback, setPhase, teardown],
   );
 
   const handleToolCall = useCallback(
@@ -168,32 +187,6 @@ export function LiveSessionView() {
     },
     [endInterview],
   );
-
-  // Interruption and silence tracking
-  const isInterruptedRef = useRef<boolean>(false);
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // --- Teardown engine ---
-  const teardown = useCallback(() => {
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-      silenceTimeoutRef.current = null;
-    }
-    if (videoIntervalRef.current) {
-      clearInterval(videoIntervalRef.current);
-      videoIntervalRef.current = null;
-    }
-    if (videoStreamRef.current) {
-      videoStreamRef.current.getTracks().forEach((t) => t.stop());
-      videoStreamRef.current = null;
-    }
-    recorderRef.current?.stop();
-    recorderRef.current = null;
-    playerRef.current?.dispose();
-    playerRef.current = null;
-    clientRef.current?.close();
-    clientRef.current = null;
-  }, []);
 
   const connect = useCallback(async () => {
     if (!config) return;
