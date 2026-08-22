@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Feedback, InterviewConfig, TranscriptEntry } from '@/core/state/types';
 import { handleEndInterviewToolCall } from '@/core/gemini/tools';
+import { getRandomGeminiApiKey } from '@/lib/gemini-keys';
 
 export const runtime = 'nodejs';
 
@@ -15,10 +16,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as EvaluateRequestBody;
     const config = body.config;
     const transcript = body.transcript || [];
-    const apiKey =
-      body.apiKey?.trim() ||
-      config?.apiKey?.trim() ||
-      process.env.GEMINI_API_KEY;
+    const apiKey = getRandomGeminiApiKey(body.apiKey || config?.apiKey);
 
     if (!apiKey) {
       return NextResponse.json(

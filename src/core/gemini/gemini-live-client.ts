@@ -3,6 +3,7 @@ import type {
   InterviewConfig,
 } from '@/core/state/types';
 import {
+  BOARD_OFFICERS,
   DEFAULT_MODEL,
   GEMINI_LIVE_ENDPOINT,
   buildGenerationConfig,
@@ -151,6 +152,8 @@ export class GeminiLiveClient {
     if (msg.setupComplete) {
       this.setupAcknowledged = true;
       this.emit('open');
+      // Proactively trigger the AI board officer to speak first and initiate the interview
+      this.sendInitialGreeting();
       return;
     }
 
@@ -192,6 +195,40 @@ export class GeminiLiveClient {
       }
     }
     // turnComplete is informational; the player's onPlaybackEnd handles state transitions.
+  }
+
+  /** Send a text prompt or system cue to Gemini Live to trigger an immediate model response. */
+  sendClientContent(text: string): void {
+    if (!this.setupAcknowledged || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    this.sendRaw({
+      client_content: {
+        turns: [
+          {
+            role: 'user',
+            parts: [{ text }],
+          },
+        ],
+        turn_complete: true,
+      },
+    });
+  }
+
+  /** Send initial greeting cue to prompt Gemini to start talking first immediately. */
+  sendInitialGreeting(): void {
+    const examCat = this.config.examCategory ?? this.config.role;
+    const officer = BOARD_OFFICERS[examCat] || BOARD_OFFICERS['UPSC Civil Services (IAS/IPS)'];
+    const name = this.config.candidateName?.trim() || 'Candidate';
+    const isVideo = this.config.inputMode === 'video_audio';
+
+    const visualCue = isVideo
+      ? 'Observe their posture and appearance via webcam.'
+      : '';
+
+    const cue = `[System Event: The candidate "${name}" has entered the interview room and taken their seat. ${visualCue} In character as ${officer.name} (${officer.designation}), formally welcome ${name} to the ${examCat} interview board, introduce yourself, and immediately ask your opening probing question to begin the interview.]`;
+
+    this.sendClientContent(cue);
   }
 
   /** Stream a base64 Int16 PCM chunk to the server. */
