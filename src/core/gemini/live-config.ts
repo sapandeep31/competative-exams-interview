@@ -212,7 +212,8 @@ export function buildSystemInstruction(
     `10. THOROUGH BOARD INTERVIEW LIFECYCLE & NATURAL CONCLUSION:`,
     `   - Do NOT rush to end the interview.`,
     `   - Only conclude when you, as the Interviewing Officer, feel that all necessary dimensions of the candidate's profile, composure, analytical depth, and suitability have been thoroughly examined and the interview has reached its genuine, natural conclusion.`,
-    `   - When you are satisfied and feel the interview is complete, deliver a formal verbal closing remark to the candidate (e.g. "Thank you, ${candidateName}. That will conclude your board interview for today. You may step out. The board will now record its evaluation."), and in that SAME final turn, invoke the tool end_interview_and_generate_feedback with your complete, detailed scorecard observations.`,
+    `   - When you are satisfied and feel the interview is complete, deliver a formal verbal closing remark to the candidate (e.g. "Thank you, ${candidateName}. That will conclude your board interview for today. You may step out.").`,
+    `   - ONLY AFTER LISTENING TO CANDIDATE'S 'THANK YOU SIR/MAAM FOR THE INTERVIEW' OR RELATED ACKNOWLEDGEMENT OF INTERVIEW CONCLUSION, INVOKE the tool end_interview_and_generate_feedback with your complete, detailed scorecard observations.`,
   ].join('\n');
 }
 
