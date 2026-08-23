@@ -168,7 +168,7 @@ export default function SignUpPage() {
                     className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-400/90 hover:text-amber-300 transition-colors cursor-pointer"
                   >
                     <PlayCircle className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                    <span>Watch Video</span>
+                    <span>Watch video if you don&apos;t know how to get one</span>
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl bg-zinc-950 border border-zinc-800 text-zinc-100 p-6 rounded-xl sm:rounded-2xl shadow-2xl">
@@ -206,7 +206,19 @@ export default function SignUpPage() {
                       <span className="font-mono text-[11px] font-bold text-indigo-400 bg-indigo-500/10 rounded px-1.5 py-0.5">
                         1
                       </span>
-                      <span>Visit Google AI Studio & sign in with Gmail.</span>
+                      <span>
+                        Visit{' '}
+                        <a
+                          href="https://aistudio.google.com/api-keys"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sky-400 hover:text-sky-300 underline font-medium inline-flex items-center gap-0.5"
+                        >
+                          Google AI Studio
+                          <ExternalLink className="h-2.5 w-2.5 inline" />
+                        </a>{' '}
+                        & sign in with Gmail.
+                      </span>
                     </div>
                     <div className="flex items-start gap-2 bg-zinc-900/40 p-2.5 rounded-md border border-zinc-800/60">
                       <span className="font-mono text-[11px] font-bold text-indigo-400 bg-indigo-500/10 rounded px-1.5 py-0.5">
@@ -222,21 +234,12 @@ export default function SignUpPage() {
                     </div>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between">
-                    <a
-                      href="https://aistudio.google.com/api-keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors gap-1.5"
-                    >
-                      Open Google AI Studio
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                  <div className="mt-3 flex items-center justify-end">
                     <Button
                       type="button"
                       size="sm"
                       onClick={() => setVideoOpen(false)}
-                      className="h-8 text-xs bg-zinc-100 text-zinc-950 hover:bg-white"
+                      className="h-8 text-xs bg-zinc-100 text-zinc-950 hover:bg-white cursor-pointer"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                       I have my key
