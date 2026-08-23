@@ -168,7 +168,7 @@ export default function SignUpPage() {
                     className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-400/90 hover:text-amber-300 transition-colors cursor-pointer"
                   >
                     <PlayCircle className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                    <span>Watch video if you don&apos;t know how to get one</span>
+                    <span>How to get one? (Video)</span>
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl bg-zinc-950 border border-zinc-800 text-zinc-100 p-6 rounded-xl sm:rounded-2xl shadow-2xl">
@@ -257,17 +257,6 @@ export default function SignUpPage() {
               placeholder="AIzaSy..."
               className="w-full h-9 px-3 rounded-md border border-zinc-800 bg-zinc-950 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
             />
-            <div className="flex items-center justify-between mt-1.5">
-              <a
-                href="https://aistudio.google.com/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors gap-1"
-              >
-                Get your free API key from Google AI Studio
-                <ExternalLink className="h-2.5 w-2.5" />
-              </a>
-            </div>
           </div>
 
           {error && (
