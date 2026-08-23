@@ -408,7 +408,7 @@ export function InterviewSetup() {
               Configure your candidate credentials, target exam panel, simulation mode, and telemetry streams.
             </p>
           </div>
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div>
             <Link href="/dashboard">
               <Button
                 variant="outline"
@@ -419,10 +419,6 @@ export function InterviewSetup() {
                 Back to Dashboard
               </Button>
             </Link>
-            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400 bg-zinc-900/60 px-3 py-1.5 rounded-md border border-zinc-800">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              6 Specialized Boards
-            </div>
           </div>
         </div>
 
