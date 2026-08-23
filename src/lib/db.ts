@@ -1,19 +1,7 @@
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
-const globalForDb = globalThis as unknown as {
-  pool: Pool | undefined;
-};
+const sql = neon(process.env.DATABASE_URL!);
 
-const pool =
-  globalForDb.pool ??
-  new Pool({
-    connectionString: process.env.DATABASE_URL!,
-  });
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForDb.pool = pool;
-}
-
-export const db = drizzle(pool, { schema });
+export const db = drizzle(sql, { schema });

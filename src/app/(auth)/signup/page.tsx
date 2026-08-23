@@ -56,10 +56,9 @@ export default function SignUpPage() {
         console.warn('Failed to save API key, user can add it from dashboard.');
       }
 
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch {
       setError('Something went wrong. Please try again.');
-    } finally {
       setLoading(false);
     }
   }

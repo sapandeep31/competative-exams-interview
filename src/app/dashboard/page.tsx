@@ -52,6 +52,9 @@ export default function DashboardPage() {
         if (profileRes.ok) {
           const profile = await profileRes.json();
           setHasApiKey(profile.hasApiKey);
+        } else if (profileRes.status === 401) {
+          window.location.href = '/login';
+          return;
         }
 
         if (interviewsRes.ok) {
@@ -65,10 +68,8 @@ export default function DashboardPage() {
       }
     }
 
-    if (session?.user) {
-      fetchData();
-    }
-  }, [session]);
+    fetchData();
+  }, []);
 
   async function handleSaveApiKey() {
     if (!apiKeyInput.trim()) return;
@@ -108,7 +109,7 @@ export default function DashboardPage() {
     });
   }
 
-  if (sessionLoading || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />

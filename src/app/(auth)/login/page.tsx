@@ -25,12 +25,12 @@ export default function LoginPage() {
       const result = await signIn.email({ email, password });
       if (result.error) {
         setError(result.error.message ?? 'Invalid email or password.');
+        setLoading(false);
       } else {
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }
     } catch {
       setError('Something went wrong. Please try again.');
-    } finally {
       setLoading(false);
     }
   }
