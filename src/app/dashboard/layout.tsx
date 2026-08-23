@@ -17,7 +17,7 @@ export default function DashboardLayout({
 
   async function handleSignOut() {
     await signOut();
-    router.push('/login');
+    window.location.href = '/';
   }
 
   return (
