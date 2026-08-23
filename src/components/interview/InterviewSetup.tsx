@@ -47,6 +47,7 @@ import { useInterviewStore } from '@/core/state/useInterviewStore';
 import type { ExamCategory, InputMode, SimulationMode } from '@/core/state/types';
 import { AudioRecorder } from '@/core/audio/AudioRecorder';
 import { cn } from '@/lib/utils';
+import { useSession } from '@/lib/auth-client';
 
 interface ExamCardConfig {
   id: ExamCategory;
@@ -152,11 +153,20 @@ interface MicMeterState {
 }
 
 export function InterviewSetup() {
+  const { data: session } = useSession();
   const setConfig = useInterviewStore((s) => s.setConfig);
   const setPhase = useInterviewStore((s) => s.setPhase);
   const setError = useInterviewStore((s) => s.setError);
 
   const [name, setName] = useState('');
+
+  // Automatically pre-fill name from authenticated user profile
+  useEffect(() => {
+    if (session?.user?.name && !name) {
+      setName(session.user.name);
+    }
+  }, [session?.user?.name, name]);
+
   const [selectedExam, setSelectedExam] = useState<ExamCategory>('UPSC Civil Services (IAS/IPS)');
   const [selectedMode, setSelectedMode] = useState<SimulationMode>('Comprehensive Board Mock');
   const [inputMode, setInputMode] = useState<InputMode>('audio_only');
