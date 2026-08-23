@@ -116,7 +116,6 @@ export function LiveSessionView() {
 
   // --- Teardown engine ---
   const teardown = useCallback(() => {
-    endedRef.current = true;
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
