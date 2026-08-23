@@ -63,6 +63,8 @@ export const accounts = pgTable(
     refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
     scope: text('scope'),
     password: text('password'),
+    issuer: text('issuer'),
+    expiresAt: timestamp('expires_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
@@ -87,6 +89,12 @@ export const verifications = pgTable(
   },
   (table) => [index('verifications_identifier_idx').on(table.identifier)],
 );
+
+// Better-Auth table aliases
+export const user = users;
+export const session = sessions;
+export const account = accounts;
+export const verification = verifications;
 
 // ============================================================================
 // Application-Specific Tables
