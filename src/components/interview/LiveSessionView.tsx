@@ -116,6 +116,7 @@ export function LiveSessionView() {
 
   // --- Teardown engine ---
   const teardown = useCallback(() => {
+    endedRef.current = true;
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
@@ -128,12 +129,19 @@ export function LiveSessionView() {
       videoStreamRef.current.getTracks().forEach((t) => t.stop());
       videoStreamRef.current = null;
     }
-    recorderRef.current?.stop();
-    recorderRef.current = null;
-    playerRef.current?.dispose();
-    playerRef.current = null;
-    clientRef.current?.close();
-    clientRef.current = null;
+    if (recorderRef.current) {
+      recorderRef.current.stop();
+      recorderRef.current = null;
+    }
+    if (playerRef.current) {
+      playerRef.current.stopAndClear();
+      playerRef.current.dispose();
+      playerRef.current = null;
+    }
+    if (clientRef.current) {
+      clientRef.current.close();
+      clientRef.current = null;
+    }
   }, []);
 
   const endInterview = useCallback(
@@ -147,9 +155,12 @@ export function LiveSessionView() {
       setFeedback(feedback);
       setPhase('feedback');
 
-      // Auto-save completed interview to database
+      // Auto-save completed interview to database (strictly once)
       try {
         const state = useInterviewStore.getState();
+        if (state.isSaved) return;
+        useInterviewStore.getState().setIsSaved(true);
+
         const currentConfig = state.config;
         if (currentConfig) {
           await fetch('/api/user/interviews', {
@@ -214,8 +225,8 @@ export function LiveSessionView() {
   );
 
   const connect = useCallback(async () => {
-    if (!config) return;
-    endedRef.current = false;
+    const currentPhase = useInterviewStore.getState().phase;
+    if (!config || currentPhase !== 'live' || endedRef.current) return;
     isInterruptedRef.current = false;
     setConnectionState('connecting');
     setAudioState('idle');
@@ -543,12 +554,17 @@ export function LiveSessionView() {
     }
   }, [config, endInterview, teardown]);
 
-  // Connect on mount
+  // Connect strictly once on live room mount
+  const hasConnectedRef = useRef(false);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void connect();
-    return () => teardown();
-  }, [connect, teardown]);
+    if (!hasConnectedRef.current && phase === 'live' && !endedRef.current) {
+      hasConnectedRef.current = true;
+      void connect();
+    }
+    return () => {
+      teardown();
+    };
+  }, [connect, phase, teardown]);
 
   // Elapsed timer tick (1 second)
   useEffect(() => {
@@ -566,7 +582,10 @@ export function LiveSessionView() {
 
   // Retry on failure
   const handleRetry = useCallback(() => {
+    endedRef.current = false;
+    hasConnectedRef.current = false;
     teardown();
+    endedRef.current = false;
     void connect();
   }, [connect, teardown]);
 

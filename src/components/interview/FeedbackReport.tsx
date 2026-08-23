@@ -233,31 +233,6 @@ export function FeedbackReport() {
 
   const [copied, setCopied] = useState(false);
 
-  // Backup auto-save: ensure newly finished interview is saved to Neon DB
-  const savedRef = useRef(false);
-  useEffect(() => {
-    if (savedRef.current || !feedback || !config) return;
-    savedRef.current = true;
-
-    fetch('/api/user/interviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        candidateName: config.candidateName || 'Candidate',
-        examCategory: config.examCategory || config.role || 'UPSC Civil Services',
-        simulationMode: config.simulationMode || config.level || 'Comprehensive Board Mock',
-        inputMode: config.inputMode || 'audio_only',
-        overallScore: feedback.overall_score ?? null,
-        verdict: feedback.verdict || feedback.hiring_verdict || null,
-        durationSeconds: elapsedSeconds || 0,
-        feedbackJson: feedback,
-        configJson: config,
-      }),
-    }).catch((err) => {
-      console.error('[FeedbackReport] Auto-save error:', err);
-    });
-  }, [feedback, config, elapsedSeconds]);
-
   const meta = useMemo(
     () => ({
       name: config?.candidateName ?? 'Candidate',

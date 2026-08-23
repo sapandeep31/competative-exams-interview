@@ -285,9 +285,13 @@ export class GeminiLiveClient {
 
   close(): void {
     this.closed = true;
+    this.setupAcknowledged = false;
     if (this.ws) {
+      this.ws.onopen = null;
+      this.ws.onmessage = null;
+      this.ws.onerror = null;
+      this.ws.onclose = null;
       try {
-        // Try a graceful close — server may send final toolCall first.
         this.ws.close(1000, 'client closed');
       } catch {
         /* ignore */

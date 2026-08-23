@@ -27,6 +27,7 @@ interface InterviewState {
   // Data.
   transcript: TranscriptEntry[];
   feedback: Feedback | null;
+  isSaved: boolean;
 
   // Error surface.
   error: string | null;
@@ -42,6 +43,7 @@ interface InterviewState {
   addTranscript: (role: TranscriptEntry['role'], text: string) => void;
   appendTranscript: (role: TranscriptEntry['role'], text: string) => void;
   setFeedback: (fb: Feedback) => void;
+  setIsSaved: (saved: boolean) => void;
   setError: (err: string | null) => void;
   tick: () => void;
   reset: () => void;
@@ -70,6 +72,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
 
   transcript: [],
   feedback: null,
+  isSaved: false,
 
   error: null,
 
@@ -78,6 +81,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       config,
       transcript: [],
       feedback: null,
+      isSaved: false,
       elapsedSeconds: 0,
       audioState: 'idle',
       error: null,
@@ -137,6 +141,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
     }),
 
   setFeedback: (feedback) => set({ feedback }),
+  setIsSaved: (isSaved) => set({ isSaved }),
   setError: (error) => set({ error }),
   tick: () => set((s) => ({ elapsedSeconds: s.elapsedSeconds + 1 })),
 
@@ -151,6 +156,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
       elapsedSeconds: 0,
       transcript: [],
       feedback: null,
+      isSaved: false,
       error: null,
     }),
 }));
