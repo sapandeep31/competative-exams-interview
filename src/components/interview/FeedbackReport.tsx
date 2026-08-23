@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/accordion';
 import { BOARD_OFFICERS } from '@/core/gemini/live-config';
 import { useInterviewStore } from '@/core/state/useInterviewStore';
-import type { ExamVerdict, Feedback } from '@/core/state/types';
+import type { ExamVerdict, Feedback, InterviewConfig } from '@/core/state/types';
 import { cn } from '@/lib/utils';
 
 const VERDICT_STYLES: Record<ExamVerdict, { badge: string; desc: string }> = {
@@ -224,12 +224,28 @@ function buildMarkdown(
   return lines.join('\n');
 }
 
-export function FeedbackReport() {
-  const feedback = useInterviewStore((s) => s.feedback);
+export interface FeedbackReportProps {
+  initialFeedback?: Feedback | null;
+  initialConfig?: InterviewConfig | null;
+  initialElapsedSeconds?: number;
+  initialDate?: string;
+}
+
+export function FeedbackReport({
+  initialFeedback,
+  initialConfig,
+  initialElapsedSeconds,
+  initialDate,
+}: FeedbackReportProps = {}) {
+  const storeFeedback = useInterviewStore((s) => s.feedback);
   const transcript = useInterviewStore((s) => s.transcript);
-  const config = useInterviewStore((s) => s.config);
-  const elapsedSeconds = useInterviewStore((s) => s.elapsedSeconds);
+  const storeConfig = useInterviewStore((s) => s.config);
+  const storeElapsedSeconds = useInterviewStore((s) => s.elapsedSeconds);
   const reset = useInterviewStore((s) => s.reset);
+
+  const feedback = initialFeedback ?? storeFeedback;
+  const config = initialConfig ?? storeConfig;
+  const elapsedSeconds = initialElapsedSeconds ?? storeElapsedSeconds;
 
   const [copied, setCopied] = useState(false);
 
@@ -238,10 +254,10 @@ export function FeedbackReport() {
       name: config?.candidateName ?? 'Candidate',
       exam: config?.examCategory ?? config?.role ?? 'UPSC Civil Services',
       mode: config?.simulationMode ?? config?.level ?? 'Comprehensive Board Mock',
-      date: formatTime(Date.now()),
+      date: initialDate ?? formatTime(Date.now()),
       duration: formatDuration(elapsedSeconds),
     }),
-    [config, elapsedSeconds],
+    [config, elapsedSeconds, initialDate],
   );
 
   if (!feedback) {

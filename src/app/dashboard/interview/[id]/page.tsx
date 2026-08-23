@@ -56,13 +56,13 @@ export default function PastInterviewPage() {
         const data: InterviewDetail = await res.json();
         setInterview(data);
 
-        // Hydrate the store with the saved feedback so FeedbackReport renders
+        // Hydrate the store (config first, then feedback so config doesn't reset feedback)
+        if (data.configJson) {
+          setConfig(data.configJson as unknown as Parameters<typeof setConfig>[0]);
+        }
         if (data.feedbackJson) {
           setFeedback(data.feedbackJson);
           setPhase('feedback');
-        }
-        if (data.configJson) {
-          setConfig(data.configJson as unknown as Parameters<typeof setConfig>[0]);
         }
       } catch {
         setError('Failed to load interview.');
@@ -98,34 +98,22 @@ export default function PastInterviewPage() {
     );
   }
 
-  // If we have feedback in the store, render the full FeedbackReport component
-  if (feedback) {
+  // If we have feedback JSON stored, render the full FeedbackReport component
+  if (interview.feedbackJson) {
     return (
       <div>
-        {/* Back bar */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1 -ml-2">
-              <ArrowLeft className="h-3 w-3" />
-              Dashboard
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2 mt-2 mb-2">
-            <Badge variant="outline" className="text-[10px] border-zinc-800 text-zinc-400">
-              {interview.examCategory}
-            </Badge>
-            <Badge variant="outline" className="text-[10px] border-zinc-800 text-zinc-400">
-              {interview.simulationMode}
-            </Badge>
-            <span className="text-[11px] text-zinc-600">
-              {new Date(interview.createdAt).toLocaleDateString('en-IN', {
-                day: 'numeric', month: 'short', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              })}
-            </span>
-          </div>
-        </div>
-        <FeedbackReport />
+        <FeedbackReport
+          initialFeedback={interview.feedbackJson}
+          initialConfig={interview.configJson as unknown as Parameters<typeof setConfig>[0]}
+          initialElapsedSeconds={interview.durationSeconds ?? 0}
+          initialDate={new Date(interview.createdAt).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        />
       </div>
     );
   }
