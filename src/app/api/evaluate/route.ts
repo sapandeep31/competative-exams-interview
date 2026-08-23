@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Feedback, InterviewConfig, TranscriptEntry } from '@/core/state/types';
 import { handleEndInterviewToolCall } from '@/core/gemini/tools';
 import { getRandomGeminiApiKey } from '@/lib/gemini-keys';
+import { getAuthenticatedUser, getUserApiKey } from '@/lib/auth-helpers';
+import { db } from '@/lib/db';
+import { interviews } from '@/lib/schema';
 
 export const runtime = 'nodejs';
 
@@ -9,6 +12,7 @@ interface EvaluateRequestBody {
   config?: InterviewConfig;
   transcript?: TranscriptEntry[];
   apiKey?: string;
+  durationSeconds?: number;
 }
 
 export async function POST(req: NextRequest) {
@@ -16,7 +20,16 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as EvaluateRequestBody;
     const config = body.config;
     const transcript = body.transcript || [];
-    const apiKey = getRandomGeminiApiKey(body.apiKey || config?.apiKey);
+
+    // Auth-aware API key resolution
+    let apiKey: string | undefined;
+    const session = await getAuthenticatedUser();
+    if (session?.user) {
+      apiKey = await getUserApiKey(session.user.id);
+    }
+    if (!apiKey) {
+      apiKey = getRandomGeminiApiKey(body.apiKey || config?.apiKey);
+    }
 
     if (!apiKey) {
       return NextResponse.json(
@@ -118,6 +131,27 @@ ${visualInstructions}
       parsedJson.non_verbal_cues = ['N/A - Voice only session (camera disabled)'];
     }
     const validatedFeedback: Feedback = handleEndInterviewToolCall(parsedJson);
+
+    // Auto-save the interview + feedback to DB if user is authenticated
+    if (session?.user && config) {
+      try {
+        await db.insert(interviews).values({
+          userId: session.user.id,
+          candidateName: config.candidateName || 'Candidate',
+          examCategory: config.examCategory || config.role || 'Unknown',
+          simulationMode: config.simulationMode || config.level || 'Unknown',
+          inputMode: config.inputMode || 'audio_only',
+          overallScore: validatedFeedback.overall_score ?? null,
+          verdict: validatedFeedback.verdict ?? null,
+          durationSeconds: body.durationSeconds ?? 0,
+          feedbackJson: validatedFeedback as unknown as Record<string, unknown>,
+          configJson: config as unknown as Record<string, unknown>,
+        });
+      } catch (dbErr) {
+        console.error('[Evaluate API] Failed to save interview to DB:', dbErr);
+        // Non-fatal: still return feedback even if save fails
+      }
+    }
 
     return NextResponse.json({ feedback: validatedFeedback });
   } catch (error) {
