@@ -137,7 +137,7 @@ export function LiveSessionView() {
   }, []);
 
   const endInterview = useCallback(
-    (feedback: Feedback) => {
+    async (feedback: Feedback) => {
       if (endedRef.current) return;
       endedRef.current = true;
 
@@ -146,6 +146,31 @@ export function LiveSessionView() {
 
       setFeedback(feedback);
       setPhase('feedback');
+
+      // Auto-save completed interview to database
+      try {
+        const state = useInterviewStore.getState();
+        const currentConfig = state.config;
+        if (currentConfig) {
+          await fetch('/api/user/interviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              candidateName: currentConfig.candidateName || 'Candidate',
+              examCategory: currentConfig.examCategory || currentConfig.role || 'UPSC Civil Services',
+              simulationMode: currentConfig.simulationMode || currentConfig.level || 'Comprehensive Board Mock',
+              inputMode: currentConfig.inputMode || 'audio_only',
+              overallScore: feedback.overall_score ?? null,
+              verdict: feedback.verdict || feedback.hiring_verdict || null,
+              durationSeconds: state.elapsedSeconds || 0,
+              feedbackJson: feedback,
+              configJson: currentConfig,
+            }),
+          });
+        }
+      } catch (err) {
+        console.error('[LiveSessionView] Auto-save error:', err);
+      }
     },
     [setFeedback, setPhase, teardown],
   );

@@ -132,27 +132,6 @@ ${visualInstructions}
     }
     const validatedFeedback: Feedback = handleEndInterviewToolCall(parsedJson);
 
-    // Auto-save the interview + feedback to DB if user is authenticated
-    if (session?.user && config) {
-      try {
-        await db.insert(interviews).values({
-          userId: session.user.id,
-          candidateName: config.candidateName || 'Candidate',
-          examCategory: config.examCategory || config.role || 'Unknown',
-          simulationMode: config.simulationMode || config.level || 'Unknown',
-          inputMode: config.inputMode || 'audio_only',
-          overallScore: validatedFeedback.overall_score ?? null,
-          verdict: validatedFeedback.verdict ?? null,
-          durationSeconds: body.durationSeconds ?? 0,
-          feedbackJson: validatedFeedback as unknown as Record<string, unknown>,
-          configJson: config as unknown as Record<string, unknown>,
-        });
-      } catch (dbErr) {
-        console.error('[Evaluate API] Failed to save interview to DB:', dbErr);
-        // Non-fatal: still return feedback even if save fails
-      }
-    }
-
     return NextResponse.json({ feedback: validatedFeedback });
   } catch (error) {
     console.error('[Evaluate API] Error generating feedback:', error);

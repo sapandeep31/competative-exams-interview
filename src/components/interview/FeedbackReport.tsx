@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -28,6 +29,7 @@ import {
   FileCheck,
   Award,
   ChevronDown,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -229,6 +231,31 @@ export function FeedbackReport() {
   const reset = useInterviewStore((s) => s.reset);
 
   const [copied, setCopied] = useState(false);
+
+  // Backup auto-save: ensure newly finished interview is saved to Neon DB
+  const savedRef = useRef(false);
+  useEffect(() => {
+    if (savedRef.current || !feedback || !config) return;
+    savedRef.current = true;
+
+    fetch('/api/user/interviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        candidateName: config.candidateName || 'Candidate',
+        examCategory: config.examCategory || config.role || 'UPSC Civil Services',
+        simulationMode: config.simulationMode || config.level || 'Comprehensive Board Mock',
+        inputMode: config.inputMode || 'audio_only',
+        overallScore: feedback.overall_score ?? null,
+        verdict: feedback.verdict || feedback.hiring_verdict || null,
+        durationSeconds: elapsedSeconds || 0,
+        feedbackJson: feedback,
+        configJson: config,
+      }),
+    }).catch((err) => {
+      console.error('[FeedbackReport] Auto-save error:', err);
+    });
+  }, [feedback, config, elapsedSeconds]);
 
   const meta = useMemo(
     () => ({
@@ -667,10 +694,20 @@ export function FeedbackReport() {
 
         {/* Bottom Actions */}
         <div className="flex items-center justify-center gap-3 pt-2 pb-6 no-print flex-wrap">
+          <Link href="/dashboard">
+            <Button
+              size="sm"
+              className="h-9 px-4 text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950 cursor-pointer"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5 mr-1.5" />
+              Go to Dashboard
+            </Button>
+          </Link>
           <Button
             onClick={reset}
+            variant="outline"
             size="sm"
-            className="h-9 px-4 text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950"
+            className="h-9 px-4 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 cursor-pointer"
           >
             <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
             Start Another Mock Interview
@@ -679,7 +716,7 @@ export function FeedbackReport() {
             onClick={handleCopyMarkdown}
             variant="outline"
             size="sm"
-            className="h-9 px-4 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
+            className="h-9 px-4 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 cursor-pointer"
           >
             <Copy className="h-3.5 w-3.5 mr-1.5" />
             {copied ? 'Copied Report' : 'Copy Markdown Report'}
@@ -688,7 +725,7 @@ export function FeedbackReport() {
             onClick={handlePrint}
             variant="outline"
             size="sm"
-            className="h-9 px-4 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
+            className="h-9 px-4 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 cursor-pointer"
           >
             <Printer className="h-3.5 w-3.5 mr-1.5" />
             Print / Save PDF
