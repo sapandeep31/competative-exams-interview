@@ -30,6 +30,7 @@ import {
   Award,
   ChevronDown,
   LayoutDashboard,
+  ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -328,51 +329,6 @@ export function FeedbackReport() {
 
   return (
     <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col antialiased">
-      {/* High-density Utility Top Bar */}
-      <header className="h-12 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between no-print">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Award className="h-4 w-4 text-emerald-400" />
-            <span className="font-semibold text-xs tracking-wider uppercase text-zinc-200">
-              Official Assessment Dossier
-            </span>
-          </div>
-          <span className="text-zinc-600 hidden sm:inline">/</span>
-          <span className="text-xs text-zinc-400 font-mono hidden sm:inline">
-            {meta.exam}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleCopyMarkdown}
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
-          >
-            <Copy className="h-3 w-3 mr-1.5" />
-            {copied ? 'Copied' : 'Copy Report'}
-          </Button>
-          <Button
-            onClick={handlePrint}
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300"
-          >
-            <Printer className="h-3 w-3 mr-1.5" />
-            Print / PDF
-          </Button>
-          <Button
-            onClick={reset}
-            size="sm"
-            className="h-8 text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950"
-          >
-            <RotateCcw className="h-3 w-3 mr-1.5" />
-            New Interview
-          </Button>
-        </div>
-      </header>
-
       {/* Main Dossier Content */}
       <div className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full space-y-6">
         {/* Dossier Header Info Banner */}
@@ -395,6 +351,16 @@ export function FeedbackReport() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              <Link href="/dashboard">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 gap-1.5 cursor-pointer"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Back to Dashboard
+                </Button>
+              </Link>
               <Badge
                 variant="outline"
                 className="bg-zinc-900 border border-zinc-800 text-zinc-300 font-mono text-xs px-2.5 py-1"

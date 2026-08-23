@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import {
   Mic,
   MicOff,
@@ -12,6 +13,8 @@ import {
   EyeOff,
   KeyRound,
   ArrowRight,
+  ArrowLeft,
+  LayoutDashboard,
   ShieldCheck,
   RefreshCw,
   Landmark,
@@ -393,36 +396,10 @@ export function InterviewSetup() {
 
   return (
     <main className="min-h-screen w-full bg-zinc-950 text-zinc-100 flex flex-col antialiased">
-      {/* High-density Utility Top Bar */}
-      <header className="h-12 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="font-semibold text-xs tracking-wider uppercase text-zinc-200">
-              Competitive Exams Board Simulator
-            </span>
-          </div>
-          <span className="text-zinc-600 hidden sm:inline">/</span>
-          <span className="text-xs text-zinc-400 font-mono hidden sm:inline">
-            v0.3.1-live
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className="text-[11px] font-mono border-zinc-800 bg-zinc-900/80 text-zinc-300 gap-1.5 px-2 py-0.5"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Official Board Session
-          </Badge>
-        </div>
-      </header>
-
       {/* Main Workspace Area */}
-      <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-6 w-full space-y-6">
+      <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full space-y-6">
         {/* Workspace Title Header */}
-        <div className="pb-4 border-b border-zinc-800/80 flex items-center justify-between flex-wrap gap-3">
+        <div className="pb-4 border-b border-zinc-800/80 flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
               Interview Setup & Board Protocol
@@ -431,9 +408,21 @@ export function InterviewSetup() {
               Configure your candidate credentials, target exam panel, simulation mode, and telemetry streams.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 bg-zinc-900/60 px-3 py-1.5 rounded-md border border-zinc-800">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            6 Specialized Boards Available
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs font-medium border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 gap-1.5 cursor-pointer"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Dashboard
+              </Button>
+            </Link>
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400 bg-zinc-900/60 px-3 py-1.5 rounded-md border border-zinc-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              6 Specialized Boards
+            </div>
           </div>
         </div>
 
