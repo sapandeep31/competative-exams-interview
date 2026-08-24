@@ -174,7 +174,7 @@ export default function LandingPage() {
             <div className="inline-flex max-w-full justify-center mb-4 sm:mb-6">
               <Badge className="bg-indigo-500/10 text-indigo-300 border-indigo-500/30 text-[10px] sm:text-xs font-mono px-2.5 sm:px-3.5 py-1 shadow-sm text-center">
                 <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5 text-indigo-400 shrink-0 inline" />
-                <span>AI-Powered Competitive Board Interview Simulator</span>
+                <span>Competitive Board Interview Simulator</span>
               </Badge>
             </div>
 
